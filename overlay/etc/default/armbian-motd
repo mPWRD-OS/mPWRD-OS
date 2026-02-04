@@ -1,0 +1,4 @@
+# Armbian MOTD configuration
+
+# Disable Armbian 'header' -- replaced with mpwrd-header
+MOTD_DISABLE="clear header"

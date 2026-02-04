@@ -20,6 +20,7 @@ BUILD_DESKTOP=$4
 Main() {
 	case $RELEASE in
 		trixie)
+			ApplyOverlay
 			AddMeshtasticRepo_Debian_OBS
 			InstallMeshtasticd
 			InstallPythonPipx
@@ -27,6 +28,7 @@ Main() {
 			CleanupApt
 			;;
 		bookworm)
+			ApplyOverlay
 			AddMeshtasticRepo_Debian_OBS
 			InstallMeshtasticd
 			InstallPythonPipx
@@ -34,6 +36,7 @@ Main() {
 			CleanupApt
 			;;
 		noble)
+			ApplyOverlay
 			AddMeshtasticRepo_Ubuntu_PPA
 			InstallMeshtasticd
 			InstallPythonPipx
@@ -46,6 +49,12 @@ Main() {
 			;;
 	esac
 } # Main
+
+ApplyOverlay() {
+	# Copy overlay files to their destinations
+	# replacing existing files
+	cp -r /tmp/overlay/* /
+} # ApplyOverlay
 
 AddMeshtasticRepo_Debian_OBS() {
 	export DEBIAN_FRONTEND=noninteractive
