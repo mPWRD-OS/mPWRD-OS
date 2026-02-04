@@ -14,7 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        config: [luckfox-pico-mini, luckfox-pico-max, luckfox-lyra-plus, raspberry-pi-64bit]
+        config:
+          - luckfox-lyra-plus
+          - luckfox-lyra-ultra-w
+          - luckfox-lyra-zero-w
+          - luckfox-pico-max
+          - luckfox-pico-mini
+          - raspberry-pi-64bit
       fail-fast: false
     steps:
       - name: Checkout armbian/build (main) into workspace root
