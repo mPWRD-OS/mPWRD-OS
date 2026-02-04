@@ -19,14 +19,25 @@ BUILD_DESKTOP=$4
 
 Main() {
 	case $RELEASE in
-		trixie | bookworm)
+		trixie)
 			AddMeshtasticRepo_Debian_OBS
 			InstallMeshtasticd
+			InstallPythonPipx
+			InstallMeshtasticCLI
+			CleanupApt
+			;;
+		bookworm)
+			AddMeshtasticRepo_Debian_OBS
+			InstallMeshtasticd
+			InstallPythonPipx
+			# pipx too old for global MeshtasticCLI install on bookworm
 			CleanupApt
 			;;
 		noble)
 			AddMeshtasticRepo_Ubuntu_PPA
 			InstallMeshtasticd
+			InstallPythonPipx
+			# pipx too old for global MeshtasticCLI install on noble
 			CleanupApt
 			;;
 		*)
@@ -71,6 +82,21 @@ InstallMeshtasticd() {
 	apt-get --yes --force-yes --allow-unauthenticated \
 		install meshtasticd
 } # InstallMeshtasticd
+
+InstallPythonPipx() {
+	# Install pipx for installing Meshtastic CLI (and other python apps)
+	export DEBIAN_FRONTEND=noninteractive
+	export APT_LISTCHANGES_FRONTEND=none
+	apt-get --yes --force-yes --allow-unauthenticated \
+		install pipx
+} # InstallPythonPipx
+
+InstallMeshtasticCLI() {
+	# Install Meshtastic CLI via pipx
+	pipx ensurepath --quiet --global
+	pipx install --global meshtastic
+	# --global flag requires pipx 1.5.0 or newer
+} # InstallMeshtasticCLI
 
 CleanupApt() {
 	apt-get clean
