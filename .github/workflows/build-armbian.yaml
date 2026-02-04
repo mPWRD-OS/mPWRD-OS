@@ -21,6 +21,7 @@ jobs:
           - luckfox-pico-max
           - luckfox-pico-mini
           - raspberry-pi-64bit
+          - uefi-x86_64
       fail-fast: false
     steps:
       - name: Checkout armbian/build (main) into workspace root
