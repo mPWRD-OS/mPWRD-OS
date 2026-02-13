@@ -20,42 +20,40 @@ BUILD_DESKTOP=$4
 Main() {
 	case $RELEASE in
 		trixie)
-			ApplyOverlay
 			AddMeshtasticRepo_Debian_OBS
 			InstallAptPkg "meshtasticd"
 			InstallAptPkg "pipx"
 			InstallPipxPkg "meshtastic"
 			InstallPipxPkg "contact"
-			CleanupApt
 			;;
 		bookworm)
-			ApplyOverlay
 			AddMeshtasticRepo_Debian_OBS
 			InstallAptPkg "meshtasticd"
 			InstallAptPkg "pipx"
 			# pipx too old for global InstallPipxPkg on bookworm
-			CleanupApt
 			;;
 		noble)
-			ApplyOverlay
 			AddMeshtasticRepo_Ubuntu_PPA
 			InstallAptPkg "meshtasticd"
 			InstallAptPkg "pipx"
 			# pipx too old for global InstallPipxPkg on noble
-			CleanupApt
 			;;
 		*)
 			echo "Unsupported mPWRD RELEASE: $RELEASE"
 			exit 1
 			;;
 	esac
+	# Always run
+	ApplyFSOverlay
+	CleanupApt
+	CompileDTBO
 } # Main
 
-ApplyOverlay() {
+ApplyFSOverlay() {
 	# Copy overlay files to their destinations
 	# replacing existing files
-	cp -r /tmp/overlay/* /
-} # ApplyOverlay
+	cp -r /tmp/overlay/fs/* /
+} # ApplyFSOverlay
 
 AddMeshtasticRepo_Debian_OBS() {
 	export DEBIAN_FRONTEND=noninteractive
@@ -108,12 +106,66 @@ CleanupApt() {
 	rm -rf /var/lib/apt/lists/*
 } # CleanupApt
 
+CompileDTBO() {
+	# Always compile DTBOs for each family (even if not enabled by default)
+	mkdir -p /boot/overlay-user
+	echo "Compiling mPWRD device tree overlays for ${LINUXFAMILY}"
+	echo "located in overlay/dtbo/${LINUXFAMILY}"
+	shopt -s nullglob
+	# If *.dts returns no results, the loop will not execute (desired behavior)
+	for f in /tmp/overlay/dtbo/"${LINUXFAMILY}"/*.dts; do
+		DTBO_NAME=$(basename "${f}" .dts)
+		echo "Compiling ${DTBO_NAME}"
+		dtc -@ -q -I dts -O dtb -o "/boot/overlay-user/${DTBO_NAME}.dtbo" "${f}"
+	done
+	shopt -u nullglob
+} # CompileDTBO
+
+EnableUserDTOverlay() {
+	USER_OVERLAYS="$1"
+	echo "Enabling user_overlays: ${USER_OVERLAYS}"
+	# Enable overlays (space separated)
+	# in /boot/armbianEnv.txt
+	if [ -f /boot/armbianEnv.txt ]; then
+		if grep -q "user_overlays=" /boot/armbianEnv.txt; then
+			# Append to existing user_overlays
+			sed -i "s/user_overlays=\(.*\)/user_overlays=\1 ${USER_OVERLAYS}/" /boot/armbianEnv.txt
+		else
+			# Add new user_overlays line
+			echo "user_overlays=${USER_OVERLAYS}" >> /boot/armbianEnv.txt
+		fi
+	else
+		echo "Warning: /boot/armbianEnv.txt not found, cannot enable device tree overlays"
+	fi
+} # EnableUserDTOverlay
+
 BoardSpecific() {
 	case $BOARD in
+		forlinx-ok3506-s12)
+			# Enable forlinx-ok3506-s12-spi0-1cs-spidev overlay
+			EnableUserDTOverlay "forlinx-ok3506-s12-spi0-1cs-spidev"
+			;;
+		luckfox-lyra-plus)
+			# Enable luckfox-lyra-plus-spi0-1cs_rmio13-spidev overlay
+			EnableUserDTOverlay "luckfox-lyra-plus-spi0-1cs_rmio13-spidev"
+			# Download waveshare pico config for lyra-plus
+			curl -fsSL https://github.com/meshtastic/firmware/raw/607b631114349234b8859c2da0d0f553b3d344f3/bin/config.d/lora-lyra-ws-raspberry-pi-pico-hat.yaml \
+				-o /etc/meshtasticd/config.d/lora-lyra-ws-raspberry-pi-pico-hat.yaml
+			;;
+		luckfox-lyra-ultra-w)
+			# Enable luckfox-lyra-ultra-w-spi0-1cs-spidev overlay
+			EnableUserDTOverlay "luckfox-lyra-ultra-w-spi0-1cs-spidev"
+			# Download 'Luckfox Ultra' 2W hat config for lyra-ultra
+			curl -fsSL https://raw.githubusercontent.com/meshtastic/firmware/607b631114349234b8859c2da0d0f553b3d344f3/bin/config.d/lora-lyra-ultra_2w.yaml \
+				-o /etc/meshtasticd/config.d/lora-lyra-ultra_2w.yaml
+			;;
+		luckfox-lyra-zero-w)
+			# Enable luckfox-lyra-zero-w-spi0-1cs-spidev overlay
+			EnableUserDTOverlay "luckfox-lyra-zero-w-spi0-1cs-spidev"
+			;;
 		luckfox-pico-mini)
 			# Copy femtofox config for pico-mini
 			cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d/
-			# Insert terrible things here 😈
 			;;
 		# raspberry-pi-64bit
 		rpi4b)
@@ -123,6 +175,8 @@ BoardSpecific() {
 			echo "No board-specific customizations for board: $BOARD"
 			;;
 	esac
+	# Fix ownership for meshtasticd configs
+	chown -R meshtasticd:meshtasticd /etc/meshtasticd/config.d
 } # BoardSpecific
 
 Main "$@"
