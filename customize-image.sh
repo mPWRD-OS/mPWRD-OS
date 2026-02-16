@@ -23,6 +23,8 @@ Main() {
 			ApplyOverlay
 			AddMeshtasticRepo_Debian_OBS
 			InstallMeshtasticd
+			AddMpwrdConfigRepo
+			InstallMpwrdConfig
 			InstallPythonPipx
 			InstallMeshtasticCLI
 			CleanupApt
@@ -31,6 +33,8 @@ Main() {
 			ApplyOverlay
 			AddMeshtasticRepo_Debian_OBS
 			InstallMeshtasticd
+			AddMpwrdConfigRepo
+			InstallMpwrdConfig
 			InstallPythonPipx
 			# pipx too old for global MeshtasticCLI install on bookworm
 			CleanupApt
@@ -39,6 +43,8 @@ Main() {
 			ApplyOverlay
 			AddMeshtasticRepo_Ubuntu_PPA
 			InstallMeshtasticd
+			AddMpwrdConfigRepo
+			InstallMpwrdConfig
 			InstallPythonPipx
 			# pipx too old for global MeshtasticCLI install on noble
 			CleanupApt
@@ -85,12 +91,31 @@ AddMeshtasticRepo_Ubuntu_PPA() {
 	apt-get update
 } # AddMeshtasticRepo_Ubuntu_PPA
 
+AddMpwrdConfigRepo() {
+	export DEBIAN_FRONTEND=noninteractive
+	export APT_LISTCHANGES_FRONTEND=none
+	apt-get update
+	apt-get --yes install ca-certificates curl
+	install -m 0755 -d /etc/apt/keyrings
+	curl -fsSL https://mpwrd-os.github.io/mpwrd-config/apt/mpwrd-config-archive-keyring.asc \
+		-o /etc/apt/keyrings/mpwrd-config-archive-keyring.asc
+	echo "deb [signed-by=/etc/apt/keyrings/mpwrd-config-archive-keyring.asc] https://mpwrd-os.github.io/mpwrd-config/apt/ ./" \
+		> /etc/apt/sources.list.d/mpwrd-config.list
+	apt-get update
+} # AddMpwrdConfigRepo
+
 InstallMeshtasticd() {
 	export DEBIAN_FRONTEND=noninteractive
 	export APT_LISTCHANGES_FRONTEND=none
 	apt-get --yes --force-yes --allow-unauthenticated \
 		install meshtasticd
 } # InstallMeshtasticd
+
+InstallMpwrdConfig() {
+	export DEBIAN_FRONTEND=noninteractive
+	export APT_LISTCHANGES_FRONTEND=none
+	apt-get --yes install mpwrd-config
+} # InstallMpwrdConfig
 
 InstallPythonPipx() {
 	# Install pipx for installing Meshtastic CLI (and other python apps)
