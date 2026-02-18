@@ -26,6 +26,7 @@ Main() {
 			InstallAptPkg "cockpit cockpit-networkmanager"
 			InstallPipxPkg "meshtastic"
 			InstallPipxPkg "contact"
+			InstallPipxPkg "mpwrd-config"
 			;;
 		bookworm)
 			AddMeshtasticRepo_Debian_OBS
