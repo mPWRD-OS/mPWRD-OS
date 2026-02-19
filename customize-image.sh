@@ -24,7 +24,8 @@ Main() {
 			AddMeshtasticRepo_Debian_OBS
 			InstallMeshtasticd
 			InstallPythonPipx
-			InstallMeshtasticCLI
+			InstallPipxPkg "meshtastic"
+			InstallPipxPkg "contact"
 			CleanupApt
 			;;
 		bookworm)
@@ -32,7 +33,7 @@ Main() {
 			AddMeshtasticRepo_Debian_OBS
 			InstallMeshtasticd
 			InstallPythonPipx
-			# pipx too old for global MeshtasticCLI install on bookworm
+			# pipx too old for global InstallPipxPkg on bookworm
 			CleanupApt
 			;;
 		noble)
@@ -40,7 +41,7 @@ Main() {
 			AddMeshtasticRepo_Ubuntu_PPA
 			InstallMeshtasticd
 			InstallPythonPipx
-			# pipx too old for global MeshtasticCLI install on noble
+			# pipx too old for global InstallPipxPkg on noble
 			CleanupApt
 			;;
 		*)
@@ -100,12 +101,12 @@ InstallPythonPipx() {
 		install pipx
 } # InstallPythonPipx
 
-InstallMeshtasticCLI() {
-	# Install Meshtastic CLI via pipx
-	pipx ensurepath --quiet --global
-	pipx install --global meshtastic
+InstallPipxPkg() {
+	PKGSPEC="$1"
+	# Install package via 'pipx install --global'
+	pipx install --global "${PKGSPEC}"
 	# --global flag requires pipx 1.5.0 or newer
-} # InstallMeshtasticCLI
+} # InstallPipxPkg
 
 CleanupApt() {
 	apt-get clean
