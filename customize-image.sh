@@ -22,8 +22,8 @@ Main() {
 		trixie)
 			ApplyOverlay
 			AddMeshtasticRepo_Debian_OBS
-			InstallMeshtasticd
-			InstallPythonPipx
+			InstallAptPkg "meshtasticd"
+			InstallAptPkg "pipx"
 			InstallPipxPkg "meshtastic"
 			InstallPipxPkg "contact"
 			CleanupApt
@@ -31,16 +31,16 @@ Main() {
 		bookworm)
 			ApplyOverlay
 			AddMeshtasticRepo_Debian_OBS
-			InstallMeshtasticd
-			InstallPythonPipx
+			InstallAptPkg "meshtasticd"
+			InstallAptPkg "pipx"
 			# pipx too old for global InstallPipxPkg on bookworm
 			CleanupApt
 			;;
 		noble)
 			ApplyOverlay
 			AddMeshtasticRepo_Ubuntu_PPA
-			InstallMeshtasticd
-			InstallPythonPipx
+			InstallAptPkg "meshtasticd"
+			InstallAptPkg "pipx"
 			# pipx too old for global InstallPipxPkg on noble
 			CleanupApt
 			;;
@@ -86,20 +86,15 @@ AddMeshtasticRepo_Ubuntu_PPA() {
 	apt-get update
 } # AddMeshtasticRepo_Ubuntu_PPA
 
-InstallMeshtasticd() {
+InstallAptPkg() {
+	PKGSPEC="$1"
+	# Install package via apt-get
+	echo "APT: Installing ${PKGSPEC}..."
 	export DEBIAN_FRONTEND=noninteractive
 	export APT_LISTCHANGES_FRONTEND=none
 	apt-get --yes --force-yes --allow-unauthenticated \
-		install meshtasticd
-} # InstallMeshtasticd
-
-InstallPythonPipx() {
-	# Install pipx for installing Meshtastic CLI (and other python apps)
-	export DEBIAN_FRONTEND=noninteractive
-	export APT_LISTCHANGES_FRONTEND=none
-	apt-get --yes --force-yes --allow-unauthenticated \
-		install pipx
-} # InstallPythonPipx
+		install "${PKGSPEC}"
+} # InstallAptPkg
 
 InstallPipxPkg() {
 	PKGSPEC="$1"
