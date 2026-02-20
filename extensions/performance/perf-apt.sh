@@ -6,7 +6,7 @@ function pre_umount_final_image__perf_apt_apply() {
 	fi
 
 	local rootfs="${MOUNT}"
-	mkdir -p "${rootfs}/etc/apt/apt.conf.d" "${rootfs}/etc/dpkg/dpkg.cfg.d"
+	mkdir -p "${rootfs}/etc/apt/apt.conf.d"
 
 	# Layer 1: transport + background-behavior tuning.
 	# These are connection/retry/timeouts and periodic activity controls.
@@ -43,14 +43,8 @@ function pre_umount_final_image__perf_apt_apply() {
 	APT::Cache-Grow "1048576";
 	EOF_APT_LOWRAM
 
-	cat > "${rootfs}/etc/dpkg/dpkg.cfg.d/99unsafe-io" <<- 'EOF_DPKG'
-	# Faster package unpack/configure at the cost of less fsync safety.
-	force-unsafe-io
-	EOF_DPKG
-
 	chmod 0644 \
 		"${rootfs}/etc/apt/apt.conf.d/90-perf-apt.conf" \
-		"${rootfs}/etc/apt/apt.conf.d/99-perf-lowram.conf" \
-		"${rootfs}/etc/dpkg/dpkg.cfg.d/99unsafe-io"
+		"${rootfs}/etc/apt/apt.conf.d/99-perf-lowram.conf"
 	return 0
 }
