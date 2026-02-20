@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-function pre_umount_final_image__luckfox_perf_fstab_noatime_apply() {
+function pre_umount_final_image__perf_fstab_noatime_apply() {
 	if [[ "${BOARD:-}" != "luckfox-pico-mini" ]]; then
 		return 0
 	fi

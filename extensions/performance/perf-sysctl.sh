@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-function pre_umount_final_image__luckfox_perf_sysctl_apply() {
+function pre_umount_final_image__perf_sysctl_apply() {
 	if [[ "${BOARD:-}" != "luckfox-pico-mini" ]]; then
 		return 0
 	fi
