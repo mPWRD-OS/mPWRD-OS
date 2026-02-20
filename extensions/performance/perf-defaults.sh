@@ -2,6 +2,10 @@
 
 function pre_umount_final_image__perf_defaults_apply() {
 	local rootfs="${MOUNT}"
+	# Luckfox Pico Mini (RV1106, 64MB RAM) is highly sensitive to SD-backed
+	# swap latency (no UHS path). A larger zram pool keeps more pressure in
+	# compressed RAM before hitting /swapfile. Rebooted A/B on this board
+	# showed ~16% lower forced-memory runtime at 75% vs 50%.
 	local zram_percentage="${PERF_ZRAM_PERCENTAGE:-75}"
 
 	# ZRAM: set compressed zram sizing using either current
