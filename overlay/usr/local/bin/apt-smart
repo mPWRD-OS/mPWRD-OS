@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+  if command -v sudo >/dev/null 2>&1; then
+    exec sudo -E "$0" "$@"
+  fi
+  echo "This script must run as root (sudo not found)." >&2
+  exit 1
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+DEBIAN_MAX_AGE_MIN="1000000"
+FORCE_DEBIAN="0"
+
+usage() {
+  cat <<USAGE
+Usage: $0 [--debian-max-age-min MIN] [--force-debian]
+
+Runs a smart low-RAM apt update sequence (local):
+1) update-fast (non-Debian sources)
+2) update-debian-security (small, frequent)
+3) update-debian only when full Debian lists are older than threshold (or forced)
+USAGE
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --debian-max-age-min) DEBIAN_MAX_AGE_MIN="$2"; shift 2 ;;
+    --force-debian) FORCE_DEBIAN="1"; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown arg: $1" >&2; usage; exit 1 ;;
+  esac
+done
+
+full_debian_mtime="0"
+if [[ -f /var/lib/apt/lists/deb.debian.org_debian_dists_trixie_InRelease ]]; then
+  full_debian_mtime="$(stat -c %Y /var/lib/apt/lists/deb.debian.org_debian_dists_trixie_InRelease 2>/dev/null || echo 0)"
+fi
+
+now_epoch="$(date +%s)"
+if [[ "$full_debian_mtime" -gt 0 ]]; then
+  age_min="$(( (now_epoch - full_debian_mtime) / 60 ))"
+else
+  age_min="999999"
+fi
+
+echo "pre_update_full_debian_age_min=${age_min} threshold_min=${DEBIAN_MAX_AGE_MIN} force_debian=${FORCE_DEBIAN}"
+
+echo "[1/3] update-fast"
+"${SCRIPT_DIR}/apt-lowram" \
+  update-fast
+
+echo "[2/3] update-debian-security"
+"${SCRIPT_DIR}/apt-lowram" \
+  update-debian-security
+
+if [[ "$FORCE_DEBIAN" == "1" || "$age_min" -ge "$DEBIAN_MAX_AGE_MIN" ]]; then
+  echo "[3/3] update-debian"
+  "${SCRIPT_DIR}/apt-lowram" \
+    update-debian
+else
+  echo "[3/3] skipped update-debian (full Debian lists still fresh)"
+fi
+
+echo "smart update complete"
