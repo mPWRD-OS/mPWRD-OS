@@ -17,16 +17,6 @@ function pre_umount_final_image__perf_defaults_apply() {
 		fi
 	fi
 
-	# CPUFreq: prefer ondemand so idle power/heat is lower while still allowing
-	# bursts to higher clocks when workload increases.
-	if [[ -f "${rootfs}/etc/default/cpufrequtils" ]]; then
-		if grep -q '^GOVERNOR=' "${rootfs}/etc/default/cpufrequtils"; then
-			sed -i 's/^GOVERNOR=.*/GOVERNOR=ondemand/' "${rootfs}/etc/default/cpufrequtils"
-		else
-			printf '\nGOVERNOR=ondemand\n' >> "${rootfs}/etc/default/cpufrequtils"
-		fi
-	fi
-
 	# PAM: ensure pam_systemd session integration stays enabled for correct
 	# session tracking/logind behavior on login shells.
 	if [[ -f "${rootfs}/etc/pam.d/common-session" ]]; then
