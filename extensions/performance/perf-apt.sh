@@ -4,8 +4,8 @@ function pre_umount_final_image__perf_apt_apply() {
 	local rootfs="${MOUNT}"
 	mkdir -p "${rootfs}/etc/apt/apt.conf.d"
 
-	# Layer 1: transport + background-behavior tuning.
-	# These are connection/retry/timeouts and periodic activity controls.
+	# Layer 1: transport/cache tuning.
+	# Periodic background behavior is owned by disable-bg-apt extension.
 	cat > "${rootfs}/etc/apt/apt.conf.d/90-perf-apt.conf" <<- 'EOF_APT_PERF'
 	// Performance apt transport/cache tuning for very low RAM systems.
 	Acquire::ForceIPv4 "true";
@@ -15,9 +15,6 @@ function pre_umount_final_image__perf_apt_apply() {
 	Acquire::Queue-Mode "access";
 	Acquire::http::No-Cache "true";
 	Acquire::http::Pipeline-Depth "0";
-	APT::Periodic::Update-Package-Lists "0";
-	APT::Periodic::Unattended-Upgrade "0";
-	APT::Periodic::AutocleanInterval "0";
 	Dir::Cache::pkgcache "";
 	Dir::Cache::srcpkgcache "";
 	EOF_APT_PERF
