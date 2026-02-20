@@ -8,6 +8,8 @@ function pre_umount_final_image__perf_apt_apply() {
 	local rootfs="${MOUNT}"
 	mkdir -p "${rootfs}/etc/apt/apt.conf.d" "${rootfs}/etc/dpkg/dpkg.cfg.d"
 
+	# Layer 1: transport + background-behavior tuning.
+	# These are connection/retry/timeouts and periodic activity controls.
 	cat > "${rootfs}/etc/apt/apt.conf.d/90-perf-apt.conf" <<- 'EOF_APT_PERF'
 	// Performance apt transport/cache tuning for very low RAM systems.
 	Acquire::ForceIPv4 "true";
@@ -24,7 +26,9 @@ function pre_umount_final_image__perf_apt_apply() {
 	Dir::Cache::srcpkgcache "";
 	EOF_APT_PERF
 
-	cat > "${rootfs}/etc/apt/apt.conf.d/99lowram" <<- 'EOF_APT_LOWRAM'
+	# Layer 2: low-memory survival knobs.
+	# Kept separate from transport knobs so each layer can be reasoned about and adjusted independently.
+	cat > "${rootfs}/etc/apt/apt.conf.d/99-perf-lowram.conf" <<- 'EOF_APT_LOWRAM'
 	// Low-RAM apt survival profile.
 	Acquire::IndexTargets::deb::Contents-deb::DefaultEnabled "false";
 	Acquire::PDiffs "false";
@@ -46,7 +50,7 @@ function pre_umount_final_image__perf_apt_apply() {
 
 	chmod 0644 \
 		"${rootfs}/etc/apt/apt.conf.d/90-perf-apt.conf" \
-		"${rootfs}/etc/apt/apt.conf.d/99lowram" \
+		"${rootfs}/etc/apt/apt.conf.d/99-perf-lowram.conf" \
 		"${rootfs}/etc/dpkg/dpkg.cfg.d/99unsafe-io"
 	return 0
 }
