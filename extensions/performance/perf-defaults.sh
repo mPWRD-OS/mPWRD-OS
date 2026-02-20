@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 
 function pre_umount_final_image__perf_defaults_apply() {
-	if [[ "${BOARD:-}" != "luckfox-pico-mini" ]]; then
-		return 0
-	fi
-
 	local rootfs="${MOUNT}"
 	local zram_percentage="${PERF_ZRAM_PERCENTAGE:-75}"
 
