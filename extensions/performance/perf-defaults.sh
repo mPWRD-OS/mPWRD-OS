@@ -16,12 +16,5 @@ function pre_umount_final_image__perf_defaults_apply() {
 		fi
 	fi
 
-	# PAM: ensure pam_systemd session integration stays enabled for correct
-	# session tracking/logind behavior on login shells.
-	if [[ -f "${rootfs}/etc/pam.d/common-session" ]]; then
-		sed -i -E 's/^#\s*(session[[:space:]]+optional[[:space:]]+pam_systemd\.so.*)$/\1/' \
-			"${rootfs}/etc/pam.d/common-session" || true
-	fi
-
 	return 0
 }
