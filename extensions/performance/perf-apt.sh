@@ -8,8 +8,8 @@ function pre_umount_final_image__perf_apt_apply() {
 	local rootfs="${MOUNT}"
 	mkdir -p "${rootfs}/etc/apt/apt.conf.d" "${rootfs}/etc/dpkg/dpkg.cfg.d"
 
-	cat > "${rootfs}/etc/apt/apt.conf.d/90-botintheshell-apt-perf.conf" <<- 'EOF_APT_PERF'
-	// BotInTheShell apt transport/cache tuning for very low RAM systems.
+	cat > "${rootfs}/etc/apt/apt.conf.d/90-perf-apt.conf" <<- 'EOF_APT_PERF'
+	// Performance apt transport/cache tuning for very low RAM systems.
 	Acquire::ForceIPv4 "true";
 	Acquire::Retries "1";
 	Acquire::http::Timeout "8";
@@ -45,7 +45,7 @@ function pre_umount_final_image__perf_apt_apply() {
 	EOF_DPKG
 
 	chmod 0644 \
-		"${rootfs}/etc/apt/apt.conf.d/90-botintheshell-apt-perf.conf" \
+		"${rootfs}/etc/apt/apt.conf.d/90-perf-apt.conf" \
 		"${rootfs}/etc/apt/apt.conf.d/99lowram" \
 		"${rootfs}/etc/dpkg/dpkg.cfg.d/99unsafe-io"
 	return 0

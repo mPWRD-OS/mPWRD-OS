@@ -10,8 +10,8 @@ function pre_umount_final_image__perf_sysctl_apply() {
 	local min_free_kbytes="${PERF_MIN_FREE_KBYTES:-3072}"
 
 	mkdir -p "${rootfs}/etc/sysctl.d"
-	cat > "${rootfs}/etc/sysctl.d/99-botintheshell-lowmem.conf" <<- EOF_SYSCTL
-	# BotInTheShell low-memory tuning for Luckfox Pico Mini (64MB class)
+	cat > "${rootfs}/etc/sysctl.d/99-perf-lowmem.conf" <<- EOF_SYSCTL
+	# Performance low-memory tuning for Luckfox Pico Mini (64MB class)
 	vm.swappiness=100
 	vm.vfs_cache_pressure=${vfs_cache_pressure}
 	vm.page-cluster=0
@@ -25,7 +25,7 @@ function pre_umount_final_image__perf_sysctl_apply() {
 	vm.dirty_writeback_centisecs=1000
 	vm.min_free_kbytes=${min_free_kbytes}
 	EOF_SYSCTL
-	chmod 0644 "${rootfs}/etc/sysctl.d/99-botintheshell-lowmem.conf"
+	chmod 0644 "${rootfs}/etc/sysctl.d/99-perf-lowmem.conf"
 	return 0
 }
 
