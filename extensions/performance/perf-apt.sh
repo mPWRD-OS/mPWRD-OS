@@ -17,7 +17,6 @@ function pre_umount_final_image__perf_apt_apply() {
 	Acquire::http::Pipeline-Depth "0";
 	// perf-sources ships disabled source snapshots; ignore them silently.
 	Dir::Ignore-Files-Silently:: "\\.disabled$";
-	Dir::Ignore-Files-Silently:: "\\.bak(\\..*)?$";
 	Dir::Cache::pkgcache "";
 	Dir::Cache::srcpkgcache "";
 	EOF_APT_PERF
