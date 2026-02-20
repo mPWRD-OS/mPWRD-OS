@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
 
 function pre_umount_final_image__perf_fstab_noatime_apply() {
-
 	local rootfs="${MOUNT}"
 	if [[ ! -f "${rootfs}/etc/fstab" ]]; then
 		return 0
 	fi
 
+	# Why: on low-end flash + low RAM devices, atime updates create extra write
+	# churn for ordinary reads. Enforcing noatime on / reduces metadata writes.
+	#
+	# How: rewrite only the root (/) mount options:
+	# - keep existing non-atime options
+	# - drop relatime/strictatime
+	# - ensure noatime is present exactly once
 	local tmp_fstab
 	tmp_fstab="$(mktemp)"
 	awk 'BEGIN{OFS="\t"}
@@ -39,4 +45,3 @@ NF>=4 && $2=="/" {
 	rm -f "${tmp_fstab}"
 	return 0
 }
-
