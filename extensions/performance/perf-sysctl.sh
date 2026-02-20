@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 
 function pre_umount_final_image__perf_sysctl_apply() {
-	if [[ "${BOARD:-}" != "luckfox-pico-mini" ]]; then
-		return 0
-	fi
 
 	local rootfs="${MOUNT}"
 	local vfs_cache_pressure="${PERF_VFS_CACHE_PRESSURE:-300}"
