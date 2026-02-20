@@ -1,0 +1,383 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+  if command -v sudo >/dev/null 2>&1; then
+    exec sudo -E "$0" "$@"
+  fi
+  echo "This script must run as root (sudo not found)." >&2
+  exit 1
+fi
+
+ACTION=""
+USE_EATMYDATA="auto"
+PRE_CLEAR_AVAIL="auto"
+PRE_APT_CLEAN="off"
+PRE_TRIM_LISTS="auto"
+OOM_SCORE_ADJ="500"
+STOP_MESHTASTIC="off"
+PKGS=()
+
+usage() {
+  cat <<USAGE
+Usage: $0 [--eatmydata {auto,on,off}] [--pre-clear-avail|--no-pre-clear-avail] [--pre-apt-clean] [--pre-trim-lists|--no-pre-trim-lists] [--oom-score-adj N] [--stop-meshtastic|--no-stop-meshtastic] ACTION [PKG...]
+
+ACTION:
+  update                  full update over all configured sources
+  update-fast             update all sources except debian.sources
+  update-debian           update only debian.sources
+  update-debian-lean      Debian-only update with lean components/suites
+  update-debian-security  Debian security-only metadata refresh
+  install <pkg...>
+  install-debian <pkg...>
+  purge <pkg...>
+  download <pkg...>       download-only install
+  upgrade-download
+  upgrade-download-debian
+  upgrade-download-debian-lean
+  upgrade-apply
+  upgrade
+  upgrade-debian
+  upgrade-debian-lean
+  dist-upgrade
+
+Notes:
+- Local-only wrapper for human usage (no SSH target parameters).
+- Runs apt-get with low-RAM defaults and optional preflight knobs.
+- meshtastic is never auto-stopped; only affected with --stop-meshtastic.
+USAGE
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --eatmydata) USE_EATMYDATA="$2"; shift 2 ;;
+    --pre-clear-avail) PRE_CLEAR_AVAIL="on"; shift ;;
+    --no-pre-clear-avail) PRE_CLEAR_AVAIL="off"; shift ;;
+    --pre-apt-clean) PRE_APT_CLEAN="on"; shift ;;
+    --pre-trim-lists) PRE_TRIM_LISTS="on"; shift ;;
+    --no-pre-trim-lists) PRE_TRIM_LISTS="off"; shift ;;
+    --oom-score-adj) OOM_SCORE_ADJ="$2"; shift 2 ;;
+    --stop-meshtastic) STOP_MESHTASTIC="on"; shift ;;
+    --no-stop-meshtastic) STOP_MESHTASTIC="off"; shift ;;
+    -h|--help) usage; exit 0 ;;
+    update|update-fast|update-debian|update-debian-lean|update-debian-security|install|install-debian|purge|upgrade-download|upgrade-download-debian|upgrade-download-debian-lean|upgrade-apply|upgrade|upgrade-debian|upgrade-debian-lean|dist-upgrade|download)
+      ACTION="$1"
+      shift
+      PKGS=("$@")
+      break
+      ;;
+    *)
+      echo "Unknown arg: $1" >&2
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+if [[ -z "$ACTION" ]]; then
+  usage
+  exit 1
+fi
+
+if [[ "$ACTION" == "install" || "$ACTION" == "install-debian" || "$ACTION" == "purge" || "$ACTION" == "download" ]] && [[ ${#PKGS[@]} -eq 0 ]]; then
+  echo "ACTION '$ACTION' needs at least one package name." >&2
+  exit 1
+fi
+
+case "$USE_EATMYDATA" in
+  auto|on|off) ;;
+  *) echo "Invalid --eatmydata value: $USE_EATMYDATA" >&2; exit 1 ;;
+esac
+case "$PRE_CLEAR_AVAIL" in
+  auto|on|off) ;;
+  *) echo "Invalid pre-clear setting: $PRE_CLEAR_AVAIL" >&2; exit 1 ;;
+esac
+case "$PRE_APT_CLEAN" in
+  on|off) ;;
+  *) echo "Invalid pre-apt-clean setting: $PRE_APT_CLEAN" >&2; exit 1 ;;
+esac
+case "$PRE_TRIM_LISTS" in
+  auto|on|off) ;;
+  *) echo "Invalid pre-trim-lists setting: $PRE_TRIM_LISTS" >&2; exit 1 ;;
+esac
+case "$STOP_MESHTASTIC" in
+  on|off) ;;
+  *) echo "Invalid stop-meshtastic setting: $STOP_MESHTASTIC" >&2; exit 1 ;;
+esac
+
+mkdir -p /var/tmp
+chmod 1777 /var/tmp
+
+# Keep apt signature validation reliable on RTC-less boots.
+ntp_sync_before="unknown"
+ntp_sync_after="unknown"
+timesyncd_state="unknown"
+if command -v timedatectl >/dev/null 2>&1; then
+  ntp_sync_before="$(timedatectl show -p NTPSynchronized --value 2>/dev/null || echo unknown)"
+fi
+if [[ "${ntp_sync_before}" != "yes" ]] && command -v systemctl >/dev/null 2>&1; then
+  systemctl start systemd-timesyncd.service >/dev/null 2>&1 || true
+  if command -v timedatectl >/dev/null 2>&1; then
+    for _i in {1..10}; do
+      ntp_sync_after="$(timedatectl show -p NTPSynchronized --value 2>/dev/null || echo no)"
+      [[ "${ntp_sync_after}" == "yes" ]] && break
+      sleep 1
+    done
+  fi
+fi
+if command -v timedatectl >/dev/null 2>&1; then
+  ntp_sync_after="$(timedatectl show -p NTPSynchronized --value 2>/dev/null || echo unknown)"
+fi
+if command -v systemctl >/dev/null 2>&1; then
+  timesyncd_state="$(systemctl is-active systemd-timesyncd.service 2>/dev/null || echo unknown)"
+fi
+
+APT_ENV=(env TMPDIR=/var/tmp DEBIAN_FRONTEND=noninteractive)
+APT_BASE_OPTS=(
+  -o Acquire::Languages=none
+  -o Acquire::IndexTargets::deb::Contents-deb::DefaultEnabled=false
+  -o Acquire::PDiffs=false
+)
+
+effective_pre_clear_avail="off"
+if [[ "${PRE_CLEAR_AVAIL}" == "on" ]]; then
+  effective_pre_clear_avail="on"
+elif [[ "${PRE_CLEAR_AVAIL}" == "auto" ]]; then
+  case "${ACTION}" in
+    install|install-debian|purge|download|upgrade-download|upgrade-download-debian|upgrade-download-debian-lean|upgrade-apply|upgrade|upgrade-debian|upgrade-debian-lean|dist-upgrade)
+      effective_pre_clear_avail="on"
+      ;;
+  esac
+fi
+
+effective_pre_trim_lists="off"
+if [[ "${PRE_TRIM_LISTS}" == "on" ]]; then
+  effective_pre_trim_lists="on"
+elif [[ "${PRE_TRIM_LISTS}" == "auto" ]]; then
+  case "${ACTION}" in
+    update|update-fast|update-debian|update-debian-lean|update-debian-security|install|install-debian|purge|download|upgrade-download|upgrade-download-debian|upgrade-download-debian-lean|upgrade-apply|upgrade|upgrade-debian|upgrade-debian-lean|dist-upgrade)
+      effective_pre_trim_lists="on"
+      ;;
+  esac
+fi
+
+heavy_action="0"
+case "${ACTION}" in
+  upgrade-download|upgrade-download-debian|upgrade-download-debian-lean|upgrade-apply|upgrade|upgrade-debian|upgrade-debian-lean|dist-upgrade)
+    heavy_action="1"
+    ;;
+esac
+
+effective_stop_meshtastic="off"
+if [[ "${STOP_MESHTASTIC}" == "on" ]]; then
+  effective_stop_meshtastic="on"
+fi
+
+stopped_meshtastic="0"
+mem_available_before_kb="$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)"
+swap_free_before_kb="$(awk '/SwapFree:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)"
+
+if [[ "${effective_pre_clear_avail}" == "on" ]]; then
+  dpkg --clear-avail >/dev/null 2>&1 || true
+fi
+if [[ "${PRE_APT_CLEAN}" == "on" ]]; then
+  apt-get clean >/dev/null 2>&1 || true
+fi
+if [[ "${effective_pre_trim_lists}" == "on" ]]; then
+  native_arch="$(dpkg --print-architecture 2>/dev/null || true)"
+  mkdir -p /var/lib/apt/lists/partial
+  rm -f /var/lib/apt/lists/partial/* >/dev/null 2>&1 || true
+  find /var/lib/apt/lists -maxdepth 1 -type f \
+    \( -name '*_Translation-*' -o -name '*_i18n_*' -o -name '*_Contents-*' -o -name '*_dep11_*' -o -name '*_icons-*' -o -name '*_cnf_*' -o -name '*.FAILED' -o -name '*.decomp' \) \
+    -delete >/dev/null 2>&1 || true
+  if [[ -n "${native_arch}" ]]; then
+    find /var/lib/apt/lists -maxdepth 1 -type f -name '*_binary-*Packages*' ! -name "*_binary-${native_arch}_Packages*" -delete >/dev/null 2>&1 || true
+  fi
+fi
+
+if [[ "${heavy_action}" == "1" ]]; then
+  if (( mem_available_before_kb < 8192 || swap_free_before_kb < 32768 )); then
+    sync
+    echo 3 > /proc/sys/vm/drop_caches 2>/dev/null || true
+    sleep 1
+  fi
+  mem_available_after_kb="$(awk '/MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)"
+  swap_free_after_kb="$(awk '/SwapFree:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)"
+  if (( mem_available_after_kb < 6144 || swap_free_after_kb < 16384 )); then
+    echo "preflight_abort=low_memory action=${ACTION} mem_available_kb=${mem_available_after_kb} swap_free_kb=${swap_free_after_kb}" >&2
+    exit 73
+  fi
+else
+  mem_available_after_kb="${mem_available_before_kb}"
+  swap_free_after_kb="${swap_free_before_kb}"
+fi
+
+if [[ "${effective_stop_meshtastic}" == "on" ]] && systemctl is-active --quiet meshtasticd.service; then
+  systemctl stop meshtasticd.service >/dev/null 2>&1 || true
+  stopped_meshtastic="1"
+fi
+
+if [[ -n "${OOM_SCORE_ADJ}" ]] && [[ -w /proc/self/oom_score_adj ]]; then
+  echo "${OOM_SCORE_ADJ}" > /proc/self/oom_score_adj 2>/dev/null || true
+fi
+
+APT_BIN=(apt-get)
+if [[ "${USE_EATMYDATA}" == "on" ]]; then
+  APT_BIN=(eatmydata apt-get)
+elif [[ "${USE_EATMYDATA}" == "auto" ]]; then
+  if command -v eatmydata >/dev/null 2>&1; then
+    APT_BIN=(eatmydata apt-get)
+  fi
+fi
+
+cmd=("${APT_ENV[@]}" "${APT_BIN[@]}" "${APT_BASE_OPTS[@]}")
+TMP_SOURCEPARTS=""
+cleanup() {
+  if [[ "${stopped_meshtastic}" == "1" ]]; then
+    systemctl start meshtasticd.service >/dev/null 2>&1 || true
+  fi
+  if [[ -n "${TMP_SOURCEPARTS}" && -d "${TMP_SOURCEPARTS}" ]]; then
+    rm -rf "${TMP_SOURCEPARTS}"
+  fi
+}
+trap cleanup EXIT
+
+build_sourceparts() {
+  local mode="$1"
+  local src bn
+  TMP_SOURCEPARTS="$(mktemp -d /tmp/bits-apt-src.XXXXXX)"
+  for src in /etc/apt/sources.list.d/*.sources /etc/apt/sources.list.d/*.list; do
+    [[ -f "${src}" ]] || continue
+    bn="$(basename "${src}")"
+    case "$mode" in
+      fast)
+        [[ "${bn}" == "debian.sources" ]] && continue
+        ;;
+      debian)
+        [[ "${bn}" != "debian.sources" ]] && continue
+        ;;
+    esac
+    cp -a "${src}" "${TMP_SOURCEPARTS}/${bn}"
+  done
+  if ! compgen -G "${TMP_SOURCEPARTS}/*" >/dev/null; then
+    echo "No source files selected for mode=${mode}" >&2
+    exit 1
+  fi
+  cmd+=(
+    -o APT::Get::List-Cleanup=false
+    -o Dir::Etc::sourcelist=/dev/null
+    -o "Dir::Etc::sourceparts=${TMP_SOURCEPARTS}"
+  )
+}
+
+build_debian_lean_sourceparts() {
+  TMP_SOURCEPARTS="$(mktemp -d /tmp/bits-apt-src.XXXXXX)"
+  cat > "${TMP_SOURCEPARTS}/debian.sources" <<'SRC'
+Types: deb
+URIs: http://deb.debian.org/debian
+Suites: trixie trixie-updates
+Components: main
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+Types: deb
+URIs: http://security.debian.org/
+Suites: trixie-security
+Components: main
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+SRC
+  cmd+=(
+    -o APT::Get::List-Cleanup=false
+    -o Dir::Etc::sourcelist=/dev/null
+    -o "Dir::Etc::sourceparts=${TMP_SOURCEPARTS}"
+  )
+}
+
+build_debian_security_sourceparts() {
+  TMP_SOURCEPARTS="$(mktemp -d /tmp/bits-apt-src.XXXXXX)"
+  cat > "${TMP_SOURCEPARTS}/debian-security.sources" <<'SRC'
+Types: deb
+URIs: http://security.debian.org/
+Suites: trixie-security
+Components: main
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+SRC
+  cmd+=(
+    -o APT::Get::List-Cleanup=false
+    -o Dir::Etc::sourcelist=/dev/null
+    -o "Dir::Etc::sourceparts=${TMP_SOURCEPARTS}"
+  )
+}
+
+case "$ACTION" in
+  update)
+    cmd+=(update)
+    ;;
+  update-fast)
+    build_sourceparts fast
+    cmd+=(update)
+    ;;
+  update-debian)
+    build_sourceparts debian
+    cmd+=(update)
+    ;;
+  update-debian-lean)
+    build_debian_lean_sourceparts
+    cmd+=(update)
+    ;;
+  update-debian-security)
+    build_debian_security_sourceparts
+    cmd+=(update)
+    ;;
+  install)
+    cmd+=(-y install --no-install-recommends "${PKGS[@]}")
+    ;;
+  install-debian)
+    build_sourceparts debian
+    cmd+=(-y install --no-install-recommends "${PKGS[@]}")
+    ;;
+  purge)
+    cmd+=(-y purge "${PKGS[@]}")
+    ;;
+  download)
+    cmd+=(-y --download-only install --no-install-recommends "${PKGS[@]}")
+    ;;
+  upgrade-download)
+    cmd+=(-y --download-only upgrade)
+    ;;
+  upgrade-download-debian)
+    build_sourceparts debian
+    cmd+=(-y --download-only upgrade)
+    ;;
+  upgrade-download-debian-lean)
+    build_debian_lean_sourceparts
+    cmd+=(-y --download-only upgrade)
+    ;;
+  upgrade-apply)
+    cmd+=(-y --no-download upgrade)
+    ;;
+  upgrade)
+    cmd+=(-y upgrade)
+    ;;
+  upgrade-debian)
+    build_sourceparts debian
+    cmd+=(-y upgrade)
+    ;;
+  upgrade-debian-lean)
+    build_debian_lean_sourceparts
+    cmd+=(-y upgrade)
+    ;;
+  dist-upgrade)
+    cmd+=(-y dist-upgrade)
+    ;;
+  *)
+    echo "Unknown action=${ACTION}" >&2
+    exit 1
+    ;;
+esac
+
+set +e
+"${cmd[@]}"
+rc=$?
+set -e
+
+exit "$rc"

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOWRAM_SCRIPT="${SCRIPT_DIR}/apt-lowram"
+
+usage() {
+  cat <<USAGE
+Usage: $0 [lowram-options...]
+
+Runs only Debian security metadata refresh via local low-RAM apt wrapper:
+  update-debian-security
+
+Example:
+  $0
+  $0 --pre-trim-lists
+USAGE
+}
+
+for arg in "$@"; do
+  case "$arg" in
+    update|update-fast|update-debian|update-debian-lean|update-debian-security|install|install-debian|purge|upgrade-download|upgrade-download-debian|upgrade-download-debian-lean|upgrade-apply|upgrade|upgrade-debian|upgrade-debian-lean|dist-upgrade|download)
+      echo "Do not pass an ACTION to this wrapper. It is fixed to update-debian-security." >&2
+      exit 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+  esac
+done
+
+if [[ ! -x "$LOWRAM_SCRIPT" ]]; then
+  echo "Low-RAM script missing or not executable: $LOWRAM_SCRIPT" >&2
+  exit 1
+fi
+
+exec "$LOWRAM_SCRIPT" "$@" update-debian-security

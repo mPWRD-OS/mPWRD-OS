@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+function pre_umount_final_image__luckfox_perf_fstab_noatime_apply() {
+	if [[ "${BOARD:-}" != "luckfox-pico-mini" ]]; then
+		return 0
+	fi
+
+	local rootfs="${MOUNT}"
+	if [[ ! -f "${rootfs}/etc/fstab" ]]; then
+		return 0
+	fi
+
+	local tmp_fstab
+	tmp_fstab="$(mktemp)"
+	awk 'BEGIN{OFS="\t"}
+/^[[:space:]]*#/ {print; next}
+NF>=4 && $2=="/" {
+  n=split($4,a,",")
+  delete seen
+  out=""
+  have_noatime=0
+  for(i=1; i<=n; i++){
+    opt=a[i]
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", opt)
+    if(opt=="") continue
+    if(opt=="relatime" || opt=="strictatime") continue
+    if(opt=="noatime") have_noatime=1
+    if(!(opt in seen)){
+      seen[opt]=1
+      out = (out=="" ? opt : out "," opt)
+    }
+  }
+  if(!have_noatime){
+    out = (out=="" ? "noatime" : out ",noatime")
+  }
+  $4=out
+  print
+  next
+}
+{print}' "${rootfs}/etc/fstab" > "${tmp_fstab}"
+	install -m 0644 "${tmp_fstab}" "${rootfs}/etc/fstab"
+	rm -f "${tmp_fstab}"
+	return 0
+}
+
