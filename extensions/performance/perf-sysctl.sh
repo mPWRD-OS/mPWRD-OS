@@ -15,10 +15,6 @@ function pre_umount_final_image__perf_sysctl_apply() {
 	vm.vfs_cache_pressure=${vfs_cache_pressure}
 	# Swap in smaller chunks to reduce latency spikes on slow swap media.
 	vm.page-cluster=0
-	# Disable optimistic overcommit; require commit accounting.
-	# vm.overcommit_memory=2
-	# Limit commit allowance to 50%% of RAM+swap.
-	# vm.overcommit_ratio=50
 	# If OOM occurs, kill allocating task directly instead of heuristic victim selection.
 	vm.oom_kill_allocating_task=1
 	# Disable transient watermark boosting behavior.
