@@ -4,7 +4,7 @@ function pre_umount_final_image__perf_apt_apply() {
 	local rootfs="${MOUNT}"
 	mkdir -p "${rootfs}/etc/apt/apt.conf.d"
 
-	# Layer 1: transport/cache tuning.
+	# Combined transport + low-memory tuning in a single file.
 	# Periodic background behavior is owned by disable-bg-apt extension.
 	cat > "${rootfs}/etc/apt/apt.conf.d/90-perf-apt.conf" <<- 'EOF_APT_PERF'
 	// Performance apt transport/cache tuning for very low RAM systems.
@@ -19,11 +19,7 @@ function pre_umount_final_image__perf_apt_apply() {
 	Dir::Ignore-Files-Silently:: "\.upstream$";
 	Dir::Cache::pkgcache "";
 	Dir::Cache::srcpkgcache "";
-	EOF_APT_PERF
 
-	# Layer 2: low-memory survival knobs.
-	# Kept separate from transport knobs so each layer can be reasoned about and adjusted independently.
-	cat > "${rootfs}/etc/apt/apt.conf.d/99-perf-lowram.conf" <<- 'EOF_APT_LOWRAM'
 	// Low-RAM apt survival profile.
 	Acquire::IndexTargets::deb::Contents-deb::DefaultEnabled "false";
 	Acquire::PDiffs "false";
@@ -36,10 +32,9 @@ function pre_umount_final_image__perf_apt_apply() {
 	APT::Get::List-Cleanup "true";
 	APT::Cache-Start "16777216";
 	APT::Cache-Grow "1048576";
-	EOF_APT_LOWRAM
+	EOF_APT_PERF
 
 	chmod 0644 \
-		"${rootfs}/etc/apt/apt.conf.d/90-perf-apt.conf" \
-		"${rootfs}/etc/apt/apt.conf.d/99-perf-lowram.conf"
+		"${rootfs}/etc/apt/apt.conf.d/90-perf-apt.conf"
 	return 0
 }
