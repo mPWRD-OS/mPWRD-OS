@@ -16,7 +16,7 @@ function pre_umount_final_image__perf_apt_apply() {
 	Acquire::http::No-Cache "true";
 	Acquire::http::Pipeline-Depth "0";
 	// perf-sources ships *.upstream source snapshots; ignore them silently.
-	Dir::Ignore-Files-Silently:: "\\.upstream$";
+	Dir::Ignore-Files-Silently:: "\.upstream$";
 	Dir::Cache::pkgcache "";
 	Dir::Cache::srcpkgcache "";
 	EOF_APT_PERF
