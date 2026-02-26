@@ -4,8 +4,7 @@ function pre_umount_final_image__perf_apt_apply() {
 	local rootfs="${MOUNT}"
 	mkdir -p "${rootfs}/etc/apt/apt.conf.d"
 
-	# Combined transport + low-memory tuning in a single file.
-	# Periodic background behavior is owned by disable-bg-apt extension.
+	# APT tuning for low-RAM images; transport/cache + low-RAM knobs.
 	cat > "${rootfs}/etc/apt/apt.conf.d/90-perf-apt.conf" <<- 'EOF_APT_PERF'
 	// Performance apt transport/cache tuning for very low RAM systems.
 	Acquire::ForceIPv4 "true";
