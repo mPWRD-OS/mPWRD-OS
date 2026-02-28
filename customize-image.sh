@@ -23,6 +23,7 @@ Main() {
 			AddMeshtasticRepo_Debian_OBS
 			InstallAptPkg "meshtasticd"
 			InstallAptPkg "pipx"
+			InstallAptPkg "cockpit cockpit-networkmanager"
 			InstallPipxPkg "meshtastic"
 			InstallPipxPkg "contact"
 			;;
@@ -30,12 +31,14 @@ Main() {
 			AddMeshtasticRepo_Debian_OBS
 			InstallAptPkg "meshtasticd"
 			InstallAptPkg "pipx"
+			InstallAptPkg "cockpit cockpit-networkmanager"
 			# pipx too old for global InstallPipxPkg on bookworm
 			;;
 		noble)
 			AddMeshtasticRepo_Ubuntu_PPA
 			InstallAptPkg "meshtasticd"
 			InstallAptPkg "pipx"
+			InstallAptPkg "cockpit cockpit-networkmanager"
 			# pipx too old for global InstallPipxPkg on noble
 			;;
 		*)
@@ -91,7 +94,7 @@ InstallAptPkg() {
 	export DEBIAN_FRONTEND=noninteractive
 	export APT_LISTCHANGES_FRONTEND=none
 	apt-get --yes --force-yes --allow-unauthenticated \
-		install "${PKGSPEC}"
+		install $PKGSPEC
 } # InstallAptPkg
 
 InstallPipxPkg() {
