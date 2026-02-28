@@ -94,7 +94,7 @@ InstallAptPkg() {
 	export DEBIAN_FRONTEND=noninteractive
 	export APT_LISTCHANGES_FRONTEND=none
 	apt-get --yes --force-yes --allow-unauthenticated \
-		install "${PKGSPEC}"
+		install $PKGSPEC
 } # InstallAptPkg
 
 InstallPipxPkg() {
