@@ -23,6 +23,7 @@ Main() {
 			AddMeshtasticRepo_Debian_OBS
 			InstallAptPkg "meshtasticd"
 			InstallAptPkg "pipx"
+			InstallAptPkg "avahi-daemon"
 			InstallAptPkg "cockpit cockpit-networkmanager"
 			InstallPipxPkg "meshtastic"
 			InstallPipxPkg "contact"
@@ -31,6 +32,7 @@ Main() {
 			AddMeshtasticRepo_Debian_OBS
 			InstallAptPkg "meshtasticd"
 			InstallAptPkg "pipx"
+			InstallAptPkg "avahi-daemon"
 			InstallAptPkg "cockpit cockpit-networkmanager"
 			# pipx too old for global InstallPipxPkg on bookworm
 			;;
@@ -38,6 +40,7 @@ Main() {
 			AddMeshtasticRepo_Ubuntu_PPA
 			InstallAptPkg "meshtasticd"
 			InstallAptPkg "pipx"
+			InstallAptPkg "avahi-daemon"
 			InstallAptPkg "cockpit cockpit-networkmanager"
 			# pipx too old for global InstallPipxPkg on noble
 			;;
