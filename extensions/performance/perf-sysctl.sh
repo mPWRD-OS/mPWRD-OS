@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
 function pre_umount_final_image__perf_sysctl_apply() {
-
 	local rootfs="${MOUNT}"
+	if [[ -z "${MOUNT:-}" || ! -d "${MOUNT}" ]]; then
+		display_alert "Extension: ${EXTENSION}" "MOUNT is unavailable; skipping perf-sysctl" "wrn"
+		return 0
+	fi
+
 	local vfs_cache_pressure="${PERF_VFS_CACHE_PRESSURE:-300}"
 	local min_free_kbytes="${PERF_MIN_FREE_KBYTES:-3072}"
 
