@@ -8,12 +8,12 @@
 #   - /etc/apt/sources.list.d/debian.sources.upstream
 # - Derive slim active manifests from those upstream snapshots.
 #
-# Slim policy:
-# - Armbian: remove any Components token ending in "-desktop"
+# Slim policy (applied uniformly to all processed .sources files):
+# - Remove any Components token ending in "-desktop"
 #   (for example, "trixie-desktop"), keep remaining components unchanged.
-# - Debian: remove any Suites token containing "backports"
+# - Remove any Suites token containing "backports"
 #   (for example, "trixie-backports").
-# - Debian: enforce "Components: main" when non-main components are present,
+# - Enforce "Components: main" when non-main components are present,
 #   so contrib, non-free, and non-free-firmware are excluded.
 #
 # Rationale:
@@ -24,6 +24,7 @@ function __perf_sources_make_slim() {
 	local out_file="$2"
 	local tmp_file
 	tmp_file="$(mktemp)"
+	trap 'rm -f "${tmp_file}"' RETURN
 
 	awk '
 	/^Suites:[[:space:]]*/ {
@@ -71,31 +72,46 @@ function __perf_sources_make_slim() {
 	}
 	{ print }
 	' "${in_file}" > "${tmp_file}"
+	local rc=$?
+	if [[ ${rc} -ne 0 ]]; then
+		return "${rc}"
+	fi
 
-	install -m 0644 "${tmp_file}" "${out_file}"
-	rm -f "${tmp_file}"
+	install -m 0644 "${tmp_file}" "${out_file}" || return $?
 	return 0
 }
 
-function pre_umount_final_image__perf_sources_apply() {
+function pre_umount_final_image__700_perf_sources_apply() {
 	local rootfs="${MOUNT}"
+	if [[ -z "${MOUNT:-}" || ! -d "${MOUNT}" ]]; then
+		display_alert "Extension: ${EXTENSION}" "MOUNT is unavailable; skipping perf-sources" "wrn"
+		return 0
+	fi
+
 	local sources_dir="${rootfs}/etc/apt/sources.list.d"
 	local armbian_active="${sources_dir}/armbian.sources"
 	local debian_active="${sources_dir}/debian.sources"
 	local armbian_upstream="${armbian_active}.upstream"
 	local debian_upstream="${debian_active}.upstream"
 
-	# If upstream source files are absent, do nothing.
-	[[ -f "${armbian_active}" ]] || return 0
-	[[ -f "${debian_active}" ]] || return 0
+	# Process each active source file independently if present.
+	if [[ -f "${armbian_active}" ]]; then
+		# Preserve upstream active profile as an upstream snapshot.
+		if [[ ! -f "${armbian_upstream}" ]]; then
+			install -m 0644 "${armbian_active}" "${armbian_upstream}"
+		fi
+		# Derive slim active profile from upstream snapshot.
+		__perf_sources_make_slim "${armbian_upstream}" "${armbian_active}"
+	fi
 
-	# Preserve upstream active profiles as upstream snapshots.
-	install -m 0644 "${armbian_active}" "${armbian_upstream}"
-	install -m 0644 "${debian_active}" "${debian_upstream}"
-
-	# Derive slim active profiles from upstream snapshots.
-	__perf_sources_make_slim "${armbian_upstream}" "${armbian_active}"
-	__perf_sources_make_slim "${debian_upstream}" "${debian_active}"
+	if [[ -f "${debian_active}" ]]; then
+		# Preserve upstream active profile as an upstream snapshot.
+		if [[ ! -f "${debian_upstream}" ]]; then
+			install -m 0644 "${debian_active}" "${debian_upstream}"
+		fi
+		# Derive slim active profile from upstream snapshot.
+		__perf_sources_make_slim "${debian_upstream}" "${debian_active}"
+	fi
 
 	return 0
 }
