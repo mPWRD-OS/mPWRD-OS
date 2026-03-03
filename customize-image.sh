@@ -16,33 +16,40 @@ RELEASE=$1
 LINUXFAMILY=$2
 BOARD=$3
 BUILD_DESKTOP=$4
+MPWRD_MENU_SUITE="${MPWRD_MENU_SUITE:-testing}"
 
 Main() {
-	case $RELEASE in
-		trixie)
-			AddMeshtasticRepo_Debian_OBS
-			InstallAptPkg "meshtasticd"
-			InstallAptPkg "pipx"
-			InstallAptPkg "avahi-daemon"
-			InstallAptPkg "cockpit cockpit-networkmanager"
-			InstallPipxPkg "meshtastic"
-			InstallPipxPkg "contact"
-			;;
-		bookworm)
-			AddMeshtasticRepo_Debian_OBS
-			InstallAptPkg "meshtasticd"
-			InstallAptPkg "pipx"
-			InstallAptPkg "avahi-daemon"
-			InstallAptPkg "cockpit cockpit-networkmanager"
-			# pipx too old for global InstallPipxPkg on bookworm
-			;;
-		noble)
-			AddMeshtasticRepo_Ubuntu_PPA
-			InstallAptPkg "meshtasticd"
-			InstallAptPkg "pipx"
-			InstallAptPkg "avahi-daemon"
-			InstallAptPkg "cockpit cockpit-networkmanager"
-			# pipx too old for global InstallPipxPkg on noble
+		case $RELEASE in
+			trixie)
+				AddMeshtasticRepo_Debian_OBS
+				AddMPWRDMenuRepo
+				InstallAptPkg "meshtasticd"
+				InstallAptPkg "mpwrd-menu"
+				InstallAptPkg "pipx"
+				InstallAptPkg "avahi-daemon"
+				InstallAptPkg "cockpit cockpit-networkmanager"
+				InstallPipxPkg "meshtastic"
+				InstallPipxPkg "contact"
+				;;
+			bookworm)
+				AddMeshtasticRepo_Debian_OBS
+				AddMPWRDMenuRepo
+				InstallAptPkg "meshtasticd"
+				InstallAptPkg "mpwrd-menu"
+				InstallAptPkg "pipx"
+				InstallAptPkg "avahi-daemon"
+				InstallAptPkg "cockpit cockpit-networkmanager"
+				# pipx too old for global InstallPipxPkg on bookworm
+				;;
+			noble)
+				AddMeshtasticRepo_Ubuntu_PPA
+				AddMPWRDMenuRepo
+				InstallAptPkg "meshtasticd"
+				InstallAptPkg "mpwrd-menu"
+				InstallAptPkg "pipx"
+				InstallAptPkg "avahi-daemon"
+				InstallAptPkg "cockpit cockpit-networkmanager"
+				# pipx too old for global InstallPipxPkg on noble
 			;;
 		*)
 			echo "Unsupported mPWRD RELEASE: $RELEASE"
@@ -89,6 +96,14 @@ AddMeshtasticRepo_Ubuntu_PPA() {
 	add-apt-repository --yes ppa:meshtastic/beta
 	apt-get update
 } # AddMeshtasticRepo_Ubuntu_PPA
+
+AddMPWRDMenuRepo() {
+	export DEBIAN_FRONTEND=noninteractive
+	export APT_LISTCHANGES_FRONTEND=none
+	echo "deb https://mpwrd-os.github.io/mpwrd-menu ${MPWRD_MENU_SUITE} main" | tee /etc/apt/sources.list.d/mpwrd-menu.list
+	curl -fsSL https://mpwrd-os.github.io/mpwrd-menu/mpwrd-archive-keyring.gpg | tee /etc/apt/trusted.gpg.d/mpwrd-menu.gpg > /dev/null
+	apt-get update
+} # AddMPWRDMenuRepo
 
 InstallAptPkg() {
 	PKGSPEC="$1"
