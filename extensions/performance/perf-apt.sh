@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 
 function pre_umount_final_image__perf_apt_apply() {
-	local rootfs="${MOUNT}"
-	mkdir -p "${rootfs}/etc/apt/apt.conf.d"
+	mkdir -p "${MOUNT}/etc/apt/apt.conf.d"
 
 	# APT tuning for low-RAM images; transport/cache + low-RAM knobs.
-	cat > "${rootfs}/etc/apt/apt.conf.d/90-perf-apt.conf" <<- 'EOF_APT_PERF'
+	cat > "${MOUNT}/etc/apt/apt.conf.d/90-perf-apt.conf" <<- 'EOF_APT_PERF'
 	// Performance apt transport/cache tuning for very low RAM systems.
 	Acquire::Retries "1";
 	Acquire::http::Timeout "8";
@@ -33,6 +32,6 @@ function pre_umount_final_image__perf_apt_apply() {
 	EOF_APT_PERF
 
 	chmod 0644 \
-		"${rootfs}/etc/apt/apt.conf.d/90-perf-apt.conf"
+		"${MOUNT}/etc/apt/apt.conf.d/90-perf-apt.conf"
 	return 0
 }
