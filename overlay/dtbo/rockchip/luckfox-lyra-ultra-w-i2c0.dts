@@ -1,0 +1,24 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Enable I2C0 with explicit RM_IO pinmux:
+ * SCL = RM_IO0, SDA = RM_IO1
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	metadata {
+		title = "Enable I2C0 on luckfox-lyra-ultra-w";
+		compatible = "rockchip,rk3506b-lyra-ultra";
+		category = "i2c";
+		exclusive = "i2c0", "RM_IO0", "RM_IO1";
+		description = "Enable I2C0 using RM_IO0(SCL), RM_IO1(SDA).";
+	};
+};
+
+&i2c0 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&rm_io0_i2c0_scl &rm_io1_i2c0_sda>;
+};

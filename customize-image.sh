@@ -181,8 +181,10 @@ BoardSpecific() {
 				-o /etc/meshtasticd/config.d/lora-lyra-ws-raspberry-pi-pico-hat.yaml
 			;;
 		luckfox-lyra-ultra-w)
-			# Enable luckfox-lyra-ultra-w-spi0-1cs-spidev overlay
+			# Enable devicetree overlays
 			EnableUserDTOverlay "luckfox-lyra-ultra-w-spi0-1cs-spidev"
+			EnableUserDTOverlay "luckfox-lyra-ultra-w-uart1"
+			EnableUserDTOverlay "luckfox-lyra-ultra-w-i2c0"
 			# Set meshtasticd MacAddressSource to 'end1' for lyra-ultra-w
 			MTSetMacSrc "end1"
 			# Download 'Luckfox Ultra' 2W hat config for lyra-ultra

@@ -1,0 +1,24 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Enable UART1 with explicit RM_IO pinmux:
+ * RX = RM_IO2, TX = RM_IO3
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	metadata {
+		title = "Enable UART1 on luckfox-lyra-ultra-w";
+		compatible = "rockchip,rk3506b-lyra-ultra";
+		category = "uart";
+		exclusive = "uart1", "RM_IO2", "RM_IO3";
+		description = "Enable UART1 using RM_IO2(RX), RM_IO3(TX).";
+	};
+};
+
+&uart1 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&rm_io2_uart1_rx &rm_io3_uart1_tx>;
+};
