@@ -82,13 +82,7 @@ function __perf_sources_make_slim() {
 }
 
 function pre_umount_final_image__700_perf_sources_apply() {
-	local rootfs="${MOUNT}"
-	if [[ -z "${MOUNT:-}" || ! -d "${MOUNT}" ]]; then
-		display_alert "Extension: ${EXTENSION}" "MOUNT is unavailable; skipping perf-sources" "wrn"
-		return 0
-	fi
-
-	local sources_dir="${rootfs}/etc/apt/sources.list.d"
+	local sources_dir="${MOUNT}/etc/apt/sources.list.d"
 	local armbian_active="${sources_dir}/armbian.sources"
 	local debian_active="${sources_dir}/debian.sources"
 	local armbian_upstream="${armbian_active}.upstream"
