@@ -1,17 +1,11 @@
 #!/usr/bin/env bash
 
 function pre_umount_final_image__perf_sysctl_apply() {
-	local rootfs="${MOUNT}"
-	if [[ -z "${MOUNT:-}" || ! -d "${MOUNT}" ]]; then
-		display_alert "Extension: ${EXTENSION}" "MOUNT is unavailable; skipping perf-sysctl" "wrn"
-		return 0
-	fi
-
 	local vfs_cache_pressure="${PERF_VFS_CACHE_PRESSURE:-300}"
 	local min_free_kbytes="${PERF_MIN_FREE_KBYTES:-3072}"
 
-	mkdir -p "${rootfs}/etc/sysctl.d"
-	cat > "${rootfs}/etc/sysctl.d/99-perf-lowmem.conf" <<- EOF_SYSCTL
+	mkdir -p "${MOUNT}/etc/sysctl.d"
+	cat > "${MOUNT}/etc/sysctl.d/99-perf-lowmem.conf" <<- EOF_SYSCTL
 	# Performance low-memory tuning for Luckfox Pico Mini (64MB class)
 	# Prefer swapping anonymous pages under pressure (higher than typical defaults).
 	vm.swappiness=100
@@ -34,6 +28,6 @@ function pre_umount_final_image__perf_sysctl_apply() {
 	# Reserve minimum free pages for allocator headroom under pressure.
 	vm.min_free_kbytes=${min_free_kbytes}
 	EOF_SYSCTL
-	chmod 0644 "${rootfs}/etc/sysctl.d/99-perf-lowmem.conf"
+	chmod 0644 "${MOUNT}/etc/sysctl.d/99-perf-lowmem.conf"
 	return 0
 }
