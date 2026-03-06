@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
 function pre_umount_final_image__perf_fstab_noatime_apply() {
-	local rootfs="${MOUNT}"
-	if [[ ! -f "${rootfs}/etc/fstab" ]]; then
+	if [[ ! -f "${MOUNT}/etc/fstab" ]]; then
 		return 0
 	fi
 
@@ -40,8 +39,8 @@ NF>=4 && $2=="/" {
   print
   next
 }
-{print}' "${rootfs}/etc/fstab" > "${tmp_fstab}"
-	install -m 0644 "${tmp_fstab}" "${rootfs}/etc/fstab"
+{print}' "${MOUNT}/etc/fstab" > "${tmp_fstab}"
+	install -m 0644 "${tmp_fstab}" "${MOUNT}/etc/fstab"
 	rm -f "${tmp_fstab}"
 	return 0
 }
