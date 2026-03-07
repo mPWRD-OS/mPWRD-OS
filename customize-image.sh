@@ -17,6 +17,10 @@ LINUXFAMILY=$2
 BOARD=$3
 BUILD_DESKTOP=$4
 
+# 'Global' env vars for all functions in this script
+export DEBIAN_FRONTEND=noninteractive
+export APT_LISTCHANGES_FRONTEND=none
+
 Main() {
 	case $RELEASE in
 		# Debian 13
@@ -75,10 +79,8 @@ ApplyFSOverlay() {
 } # ApplyFSOverlay
 
 AddMeshtasticRepo_Debian_OBS() {
-	export DEBIAN_FRONTEND=noninteractive
-	export APT_LISTCHANGES_FRONTEND=none
 	apt-get update
-	apt-get --yes --force-yes --allow-unauthenticated \
+	apt-get --yes --allow-unauthenticated \
 		install gpg
 	case $RELEASE in
 		trixie)
@@ -94,11 +96,6 @@ AddMeshtasticRepo_Debian_OBS() {
 } # AddMeshtasticRepo_Debian_OBS
 
 AddMeshtasticRepo_Ubuntu_PPA() {
-	export DEBIAN_FRONTEND=noninteractive
-	export APT_LISTCHANGES_FRONTEND=none
-	# apt-get update
-	# apt-get --yes --force-yes --allow-unauthenticated \
-	# 	install software-properties-common
 	add-apt-repository --yes ppa:meshtastic/beta
 	apt-get update
 } # AddMeshtasticRepo_Ubuntu_PPA
@@ -107,9 +104,7 @@ InstallAptPkg() {
 	PKGSPEC="$1"
 	# Install package via apt-get
 	echo "APT: Installing ${PKGSPEC}..."
-	export DEBIAN_FRONTEND=noninteractive
-	export APT_LISTCHANGES_FRONTEND=none
-	apt-get --yes --force-yes --allow-unauthenticated \
+	apt-get --yes --allow-unauthenticated \
 		install $PKGSPEC
 } # InstallAptPkg
 
