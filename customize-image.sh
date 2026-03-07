@@ -20,8 +20,6 @@ BUILD_DESKTOP=$4
 Main() {
 	case $RELEASE in
 		trixie)
-			AddMeshtasticRepo_Debian_OBS
-			InstallAptPkg "meshtasticd"
 			InstallAptPkg "pipx"
 			InstallAptPkg "avahi-daemon"
 			InstallAptPkg "cockpit cockpit-networkmanager"
@@ -29,16 +27,12 @@ Main() {
 			InstallPipxPkg "contact"
 			;;
 		bookworm)
-			AddMeshtasticRepo_Debian_OBS
-			InstallAptPkg "meshtasticd"
 			InstallAptPkg "pipx"
 			InstallAptPkg "avahi-daemon"
 			InstallAptPkg "cockpit cockpit-networkmanager"
 			# pipx too old for global InstallPipxPkg on bookworm
 			;;
 		noble)
-			AddMeshtasticRepo_Ubuntu_PPA
-			InstallAptPkg "meshtasticd"
 			InstallAptPkg "pipx"
 			InstallAptPkg "avahi-daemon"
 			InstallAptPkg "cockpit cockpit-networkmanager"
@@ -60,35 +54,6 @@ ApplyFSOverlay() {
 	# replacing existing files
 	cp -r /tmp/overlay/fs/* /
 } # ApplyFSOverlay
-
-AddMeshtasticRepo_Debian_OBS() {
-	export DEBIAN_FRONTEND=noninteractive
-	export APT_LISTCHANGES_FRONTEND=none
-	apt-get update
-	apt-get --yes --force-yes --allow-unauthenticated \
-		install gpg
-	case $RELEASE in
-		trixie)
-			debian_slug="Debian_13"
-			;;
-		bookworm)
-			debian_slug="Debian_12"
-			;;
-	esac
-	echo "deb http://download.opensuse.org/repositories/network:/Meshtastic:/beta/$debian_slug/ /" | tee /etc/apt/sources.list.d/network:Meshtastic:beta.list
-	curl -fsSL https://download.opensuse.org/repositories/network:Meshtastic:beta/$debian_slug/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/network_Meshtastic_beta.gpg > /dev/null
-	apt-get update
-} # AddMeshtasticRepo_Debian_OBS
-
-AddMeshtasticRepo_Ubuntu_PPA() {
-	export DEBIAN_FRONTEND=noninteractive
-	export APT_LISTCHANGES_FRONTEND=none
-	# apt-get update
-	# apt-get --yes --force-yes --allow-unauthenticated \
-	# 	install software-properties-common
-	add-apt-repository --yes ppa:meshtastic/beta
-	apt-get update
-} # AddMeshtasticRepo_Ubuntu_PPA
 
 InstallAptPkg() {
 	PKGSPEC="$1"
