@@ -54,6 +54,7 @@ Main() {
 	apt-get update
 	InstallAptPkg "gpg"
 	AddMeshtasticRepo
+	AddMPWRD_Repo_OBS
 	apt-get update
 	InstallAptPkg "meshtasticd"
 	InstallAptPkg "pipx"
@@ -100,6 +101,11 @@ __AddMeshtasticRepo_Debian_OBS() {
 __AddMeshtasticRepo_Ubuntu_PPA() {
 	add-apt-repository --yes ppa:meshtastic/beta
 } # __AddMeshtasticRepo_Ubuntu_PPA
+
+AddMPWRD_Repo_OBS() {
+	echo "deb http://download.opensuse.org/repositories/home:/mPWRD:/OS/$obs_slug/ /" | tee /etc/apt/sources.list.d/home:mPWRD:OS.list
+	curl -fsSL https://download.opensuse.org/repositories/home:mPWRD:OS/$obs_slug/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/home_mPWRD_OS.gpg > /dev/null
+} # AddMPWRD_Repo_OBS
 
 InstallAptPkg() {
 	PKGSPEC="$1"
