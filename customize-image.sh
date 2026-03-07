@@ -21,6 +21,27 @@ BUILD_DESKTOP=$4
 export DEBIAN_FRONTEND=noninteractive
 export APT_LISTCHANGES_FRONTEND=none
 
+# Release-specific variables
+case $RELEASE in
+	trixie)
+		obs_slug="Debian_13"
+		;;
+	bookworm)
+		obs_slug="Debian_12"
+		;;
+	resolute)
+		obs_slug="xUbuntu_26.04"
+		;;
+	noble)
+		obs_slug="xUbuntu_24.04"
+		;;
+	*)
+		# Exit early for unsupported releases
+		echo "Unsupported mPWRD RELEASE: $RELEASE"
+		exit 1
+		;;
+esac
+
 Main() {
 	case $RELEASE in
 		# Debian 13
@@ -61,10 +82,6 @@ Main() {
 			InstallAptPkg "cockpit cockpit-networkmanager"
 			# pipx too old for global InstallPipxPkg on noble
 			;;
-		*)
-			echo "Unsupported mPWRD RELEASE: $RELEASE"
-			exit 1
-			;;
 	esac
 	# Always run
 	ApplyFSOverlay
@@ -82,16 +99,8 @@ AddMeshtasticRepo_Debian_OBS() {
 	apt-get update
 	apt-get --yes --allow-unauthenticated \
 		install gpg
-	case $RELEASE in
-		trixie)
-			debian_slug="Debian_13"
-			;;
-		bookworm)
-			debian_slug="Debian_12"
-			;;
-	esac
-	echo "deb http://download.opensuse.org/repositories/network:/Meshtastic:/beta/$debian_slug/ /" | tee /etc/apt/sources.list.d/network:Meshtastic:beta.list
-	curl -fsSL https://download.opensuse.org/repositories/network:Meshtastic:beta/$debian_slug/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/network_Meshtastic_beta.gpg > /dev/null
+	echo "deb http://download.opensuse.org/repositories/network:/Meshtastic:/beta/$obs_slug/ /" | tee /etc/apt/sources.list.d/network:Meshtastic:beta.list
+	curl -fsSL https://download.opensuse.org/repositories/network:Meshtastic:beta/$obs_slug/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/network_Meshtastic_beta.gpg > /dev/null
 	apt-get update
 } # AddMeshtasticRepo_Debian_OBS
 
