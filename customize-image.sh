@@ -19,6 +19,7 @@ BUILD_DESKTOP=$4
 
 Main() {
 	case $RELEASE in
+		# Debian 13
 		trixie)
 			AddMeshtasticRepo_Debian_OBS
 			InstallAptPkg "meshtasticd"
@@ -28,6 +29,7 @@ Main() {
 			InstallPipxPkg "meshtastic"
 			InstallPipxPkg "contact"
 			;;
+		# Debian 12
 		bookworm)
 			AddMeshtasticRepo_Debian_OBS
 			InstallAptPkg "meshtasticd"
@@ -36,6 +38,17 @@ Main() {
 			InstallAptPkg "cockpit cockpit-networkmanager"
 			# pipx too old for global InstallPipxPkg on bookworm
 			;;
+		# Ubuntu 26.04 LTS
+		resolute)
+			AddMeshtasticRepo_Ubuntu_PPA
+			InstallAptPkg "meshtasticd"
+			InstallAptPkg "pipx"
+			InstallAptPkg "avahi-daemon"
+			InstallAptPkg "cockpit cockpit-networkmanager"
+			InstallPipxPkg "meshtastic"
+			InstallPipxPkg "contact"
+			;;
+		# Ubuntu 24.04 LTS
 		noble)
 			AddMeshtasticRepo_Ubuntu_PPA
 			InstallAptPkg "meshtasticd"
