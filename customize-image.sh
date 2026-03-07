@@ -24,16 +24,24 @@ export APT_LISTCHANGES_FRONTEND=none
 # Release-specific variables
 case $RELEASE in
 	trixie)
+		DISTRIBUTION="Debian"
 		obs_slug="Debian_13"
+		pipx_g=true
 		;;
 	bookworm)
+		DISTRIBUTION="Debian"
 		obs_slug="Debian_12"
+		pipx_g=false
 		;;
 	resolute)
+		DISTRIBUTION="Ubuntu"
 		obs_slug="xUbuntu_26.04"
+		pipx_g=true
 		;;
 	noble)
+		DISTRIBUTION="Ubuntu"
 		obs_slug="xUbuntu_24.04"
+		pipx_g=false
 		;;
 	*)
 		# Exit early for unsupported releases
@@ -43,44 +51,19 @@ case $RELEASE in
 esac
 
 Main() {
-	case $RELEASE in
-		# Debian 13
-		trixie)
-			AddMeshtasticRepo_Debian_OBS
-			InstallAptPkg "meshtasticd"
-			InstallAptPkg "pipx"
-			InstallAptPkg "avahi-daemon"
-			InstallAptPkg "cockpit cockpit-networkmanager"
+	AddMeshtasticRepo
+	InstallAptPkg "meshtasticd"
+	InstallAptPkg "pipx"
+	InstallAptPkg "avahi-daemon"
+	InstallAptPkg "cockpit cockpit-networkmanager"
+	case $pipx_g in
+		true)
 			InstallPipxPkg "meshtastic"
 			InstallPipxPkg "contact"
 			;;
-		# Debian 12
-		bookworm)
-			AddMeshtasticRepo_Debian_OBS
-			InstallAptPkg "meshtasticd"
-			InstallAptPkg "pipx"
-			InstallAptPkg "avahi-daemon"
-			InstallAptPkg "cockpit cockpit-networkmanager"
-			# pipx too old for global InstallPipxPkg on bookworm
-			;;
-		# Ubuntu 26.04 LTS
-		resolute)
-			AddMeshtasticRepo_Ubuntu_PPA
-			InstallAptPkg "meshtasticd"
-			InstallAptPkg "pipx"
-			InstallAptPkg "avahi-daemon"
-			InstallAptPkg "cockpit cockpit-networkmanager"
-			InstallPipxPkg "meshtastic"
-			InstallPipxPkg "contact"
-			;;
-		# Ubuntu 24.04 LTS
-		noble)
-			AddMeshtasticRepo_Ubuntu_PPA
-			InstallAptPkg "meshtasticd"
-			InstallAptPkg "pipx"
-			InstallAptPkg "avahi-daemon"
-			InstallAptPkg "cockpit cockpit-networkmanager"
-			# pipx too old for global InstallPipxPkg on noble
+		*)
+			echo "'pipx install --global' skipped for ${RELEASE} due to old pipx version."
+			echo "Target Debian 13+ or Ubuntu 26.04+ for pipx global support."
 			;;
 	esac
 	# Always run
@@ -95,19 +78,30 @@ ApplyFSOverlay() {
 	cp -r /tmp/overlay/fs/* /
 } # ApplyFSOverlay
 
-AddMeshtasticRepo_Debian_OBS() {
+AddMeshtasticRepo() {
+	case $DISTRIBUTION in
+		Debian)
+			__AddMeshtasticRepo_Debian_OBS
+			;;
+		Ubuntu)
+			__AddMeshtasticRepo_Ubuntu_PPA
+			;;
+	esac
+} # AddMeshtasticRepo
+
+__AddMeshtasticRepo_Debian_OBS() {
 	apt-get update
 	apt-get --yes --allow-unauthenticated \
 		install gpg
 	echo "deb http://download.opensuse.org/repositories/network:/Meshtastic:/beta/$obs_slug/ /" | tee /etc/apt/sources.list.d/network:Meshtastic:beta.list
 	curl -fsSL https://download.opensuse.org/repositories/network:Meshtastic:beta/$obs_slug/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/network_Meshtastic_beta.gpg > /dev/null
 	apt-get update
-} # AddMeshtasticRepo_Debian_OBS
+} # __AddMeshtasticRepo_Debian_OBS
 
-AddMeshtasticRepo_Ubuntu_PPA() {
+__AddMeshtasticRepo_Ubuntu_PPA() {
 	add-apt-repository --yes ppa:meshtastic/beta
 	apt-get update
-} # AddMeshtasticRepo_Ubuntu_PPA
+} # __AddMeshtasticRepo_Ubuntu_PPA
 
 InstallAptPkg() {
 	PKGSPEC="$1"
