@@ -6,9 +6,14 @@ function post_repo_customize_image__700_fixed_eth_mac() {
 
 	local script_path="${SDCARD}/usr/local/sbin/mpwrd-fixed-eth-mac"
 	local service_path="${SDCARD}/etc/systemd/system/mpwrd-fixed-eth-mac.service"
-	local wants_dir="${SDCARD}/etc/systemd/system/network-pre.target.wants"
+	local nm_wants_dir="${SDCARD}/etc/systemd/system/NetworkManager.service.wants"
+	local networkd_wants_dir="${SDCARD}/etc/systemd/system/systemd-networkd.service.wants"
 
-	mkdir -p "${SDCARD}/usr/local/sbin" "${SDCARD}/etc/systemd/system" "${wants_dir}"
+	mkdir -p \
+		"${SDCARD}/usr/local/sbin" \
+		"${SDCARD}/etc/systemd/system" \
+		"${nm_wants_dir}" \
+		"${networkd_wants_dir}"
 
 	cat > "${script_path}" <<'EOF'
 #!/usr/bin/env bash
@@ -140,9 +145,11 @@ Type=oneshot
 ExecStart=/usr/local/sbin/mpwrd-fixed-eth-mac
 
 [Install]
-WantedBy=network-pre.target
+WantedBy=NetworkManager.service
+WantedBy=systemd-networkd.service
 EOF
 	chmod 0644 "${service_path}"
 
-	ln -sf ../mpwrd-fixed-eth-mac.service "${wants_dir}/mpwrd-fixed-eth-mac.service"
+	ln -sf ../mpwrd-fixed-eth-mac.service "${nm_wants_dir}/mpwrd-fixed-eth-mac.service"
+	ln -sf ../mpwrd-fixed-eth-mac.service "${networkd_wants_dir}/mpwrd-fixed-eth-mac.service"
 }
