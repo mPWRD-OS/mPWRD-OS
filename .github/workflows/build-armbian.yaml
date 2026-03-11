@@ -28,8 +28,11 @@ jobs:
       - name: Checkout armbian/build (main) into workspace root
         uses: actions/checkout@v6
         with:
-          repository: armbian/build
-          ref: main
+          # repository: armbian/build
+          # ref: main
+          # DO NOT MERGE
+          repository: vidplace7/armbian-build
+          ref: zram-loosen
 
       - name: Checkout current repository into userpatches
         uses: actions/checkout@v6
