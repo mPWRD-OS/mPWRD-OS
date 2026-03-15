@@ -51,7 +51,10 @@ case $RELEASE in
 esac
 
 Main() {
+	apt-get update
+	InstallAptPkg "gpg"
 	AddMeshtasticRepo
+	apt-get update
 	InstallAptPkg "meshtasticd"
 	InstallAptPkg "pipx"
 	InstallAptPkg "avahi-daemon"
@@ -90,17 +93,12 @@ AddMeshtasticRepo() {
 } # AddMeshtasticRepo
 
 __AddMeshtasticRepo_Debian_OBS() {
-	apt-get update
-	apt-get --yes --allow-unauthenticated \
-		install gpg
 	echo "deb http://download.opensuse.org/repositories/network:/Meshtastic:/beta/$obs_slug/ /" | tee /etc/apt/sources.list.d/network:Meshtastic:beta.list
 	curl -fsSL https://download.opensuse.org/repositories/network:Meshtastic:beta/$obs_slug/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/network_Meshtastic_beta.gpg > /dev/null
-	apt-get update
 } # __AddMeshtasticRepo_Debian_OBS
 
 __AddMeshtasticRepo_Ubuntu_PPA() {
 	add-apt-repository --yes ppa:meshtastic/beta
-	apt-get update
 } # __AddMeshtasticRepo_Ubuntu_PPA
 
 InstallAptPkg() {
