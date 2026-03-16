@@ -15,6 +15,7 @@ jobs:
     strategy:
       matrix:
         config:
+          - ebyte-ecb41-pge
           - forlinx-ok3506-s12
           - luckfox-lyra-plus
           - luckfox-lyra-ultra-w
