@@ -57,6 +57,7 @@ Main() {
 	AddMPWRD_Repo_OBS
 	apt-get update
 	InstallAptPkg "meshtasticd"
+	InstallAptPkg "mpwrd-menu"
 	InstallAptPkg "pipx"
 	InstallAptPkg "avahi-daemon"
 	InstallAptPkg "cockpit cockpit-networkmanager"
