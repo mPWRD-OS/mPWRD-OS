@@ -192,7 +192,7 @@ BoardSpecific() {
 			# Set meshtasticd MacAddressSource to 'end1' for lyra-plus
 			MTSetMacSrc "end1"
 			# Download waveshare pico config for lyra-plus
-			curl -fsSL https://github.com/meshtastic/firmware/raw/607b631114349234b8859c2da0d0f553b3d344f3/bin/config.d/lora-lyra-ws-raspberry-pi-pico-hat.yaml \
+			curl -fsSL https://raw.githubusercontent.com/meshtastic/firmware/refs/tags/v2.7.20.6658ec2/bin/config.d/lora-lyra-ws-raspberry-pi-pico-hat.yaml \
 				-o /etc/meshtasticd/config.d/lora-lyra-ws-raspberry-pi-pico-hat.yaml
 			;;
 		luckfox-lyra-ultra-w)
@@ -203,7 +203,7 @@ BoardSpecific() {
 			# Set meshtasticd MacAddressSource to 'end1' for lyra-ultra-w
 			MTSetMacSrc "end1"
 			# Download 'Luckfox Ultra' 2W hat config for lyra-ultra
-			curl -fsSL https://raw.githubusercontent.com/meshtastic/firmware/607b631114349234b8859c2da0d0f553b3d344f3/bin/config.d/lora-lyra-ultra_2w.yaml \
+			curl -fsSL https://raw.githubusercontent.com/meshtastic/firmware/refs/tags/v2.7.20.6658ec2/bin/config.d/lora-lyra-ultra_2w.yaml \
 				-o /etc/meshtasticd/config.d/lora-lyra-ultra_2w.yaml
 			;;
 		luckfox-lyra-zero-w)
