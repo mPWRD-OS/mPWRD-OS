@@ -154,6 +154,23 @@ EnableUserDTOverlay() {
 	fi
 } # EnableUserDTOverlay
 
+EnableKernelDTOverlay() {
+	OVERLAY_NAME="$1"
+	echo "Enabling kernel (builtin) overlay: ${OVERLAY_NAME}"
+	# Enable overlay in /boot/armbianEnv.txt
+	if [ -f /boot/armbianEnv.txt ]; then
+		if grep -q "overlays=" /boot/armbianEnv.txt; then
+			# Append to existing overlays
+			sed -i "s/overlays=\(.*\)/overlays=\1 ${OVERLAY_NAME}/" /boot/armbianEnv.txt
+		else
+			# Add new overlays line
+			echo "overlays=${OVERLAY_NAME}" >> /boot/armbianEnv.txt
+		fi
+	else
+		echo "Warning: /boot/armbianEnv.txt not found, cannot enable device tree overlays"
+	fi
+}
+
 MTSetMacSrc() {
 	iface_name="$1"
 	# Set the General.MACAddressSource to $iface_name
@@ -165,13 +182,13 @@ BoardSpecific() {
 	case $BOARD in
 		forlinx-ok3506-s12)
 			# Enable forlinx-ok3506-s12-spi0-1cs-spidev overlay
-			EnableUserDTOverlay "forlinx-ok3506-s12-spi0-1cs-spidev"
+			EnableKernelDTOverlay "forlinx-ok3506-s12-spi0-1cs-spidev"
 			# Set meshtasticd MacAddressSource to 'end1' for forlinx-ok3506-s12
 			MTSetMacSrc "end1"
 			;;
 		luckfox-lyra-plus)
 			# Enable luckfox-lyra-plus-spi0-1cs_rmio13-spidev overlay
-			EnableUserDTOverlay "luckfox-lyra-plus-spi0-1cs_rmio13-spidev"
+			EnableKernelDTOverlay "luckfox-lyra-plus-spi0-1cs_rmio13-spidev"
 			# Set meshtasticd MacAddressSource to 'end1' for lyra-plus
 			MTSetMacSrc "end1"
 			# Download waveshare pico config for lyra-plus
@@ -180,7 +197,7 @@ BoardSpecific() {
 			;;
 		luckfox-lyra-ultra-w)
 			# Enable devicetree overlays
-			EnableUserDTOverlay "luckfox-lyra-ultra-w-spi0-1cs-spidev"
+			EnableKernelDTOverlay "luckfox-lyra-ultra-w-spi0-1cs-spidev"
 			EnableUserDTOverlay "luckfox-lyra-ultra-w-uart1"
 			EnableUserDTOverlay "luckfox-lyra-ultra-w-i2c0"
 			# Set meshtasticd MacAddressSource to 'end1' for lyra-ultra-w
@@ -191,7 +208,7 @@ BoardSpecific() {
 			;;
 		luckfox-lyra-zero-w)
 			# Enable luckfox-lyra-zero-w-spi0-1cs-spidev overlay
-			EnableUserDTOverlay "luckfox-lyra-zero-w-spi0-1cs-spidev"
+			EnableKernelDTOverlay "luckfox-lyra-zero-w-spi0-1cs-spidev"
 			;;
 		luckfox-pico-max)
 			# Set meshtasticd MacAddressSource to 'eth0' for pico-max
