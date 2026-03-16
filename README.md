@@ -1,5 +1,11 @@
-# mPWRD-userpatches
-Armbian + Meshtastic == mPWRD OS
+# mPWRD-OS
+[Armbian](https://armbian.com/) + [Meshtastic](https://meshtastic.org/) == **mPWRD-OS**
+
+## Features
+- 🐧 Debian 13 `trixie` based.
+- ❤️ Built with [Armbian](https://armbian.com/) *userpatches* framework.
+- 🛜 [meshtasticd](https://meshtastic.org/docs/hardware/devices/linux-native-hardware/) pre-installed and working out of the box.
+- 🛠️ [mpwrd-menu](https://github.com/mPWRD-OS/mpwrd-menu) simple OS management utility.
 
 ## Board Support
 
@@ -26,7 +32,7 @@ cd build
 
 2. Checkout this repo as "userpatches"
 ```sh
-git clone https://github.com/mPWRD-OS/mPWRD-userpatches userpatches
+git clone https://github.com/mPWRD-OS/mPWRD-OS userpatches
 ```
 
 3. Compile!
