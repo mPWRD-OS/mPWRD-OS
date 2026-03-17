@@ -5,9 +5,13 @@
 - 🐧 Debian 13 `trixie` based.
 - ❤️ Built with [Armbian](https://armbian.com/) *userpatches* framework.
 - 🛜 [meshtasticd](https://meshtastic.org/docs/hardware/devices/linux-native-hardware/) pre-installed and working out of the box.
-- 🛠️ [mpwrd-menu](https://github.com/mPWRD-OS/mpwrd-menu) simple OS management utility.
+- 🐍 [meshtastic](https://meshtastic.org/docs/software/python/cli/) CLI pre-installed.
+- 📡 [contact](https://github.com/pdxlocations/contact) Meshtastic TUI pre-installed.
+- 🧙 [mpwrd-menu](https://github.com/mPWRD-OS/mpwrd-menu) simple OS / Meshtastic management utility.
 
 ## Board Support
+
+See: [Board Support](https://github.com/mPWRD-OS/mPWRD-OS/wiki/Board-Support) wiki page.
 
 | Chipset  | Board                    | Status    |
 | -------- | ------------------------ | --------- |
@@ -21,6 +25,19 @@
 | RV1103B  | 🧅 OnionIOT Omega4       | Todo      |
 | BCM2711  | 🍓 Raspberry Pi (64-bit) | Supported |
 | UEFI     | 🖥️ Generic x86_64 UEFI   | Dev       |
+
+## Default Credentials
+
+| Username | Password |
+| -------: | :------- |
+| `root`   | `1234`   |
+
+## Using mPWRD-OS
+
+1. Flash the latest image from the [Releases](https://github.com/mPWRD-OS/mPWRD-OS/releases) page using [balenaEtcher](https://etcher.balena.io/) or a similar tool.
+   - For boards with eMMC: Flash with `rkdevtool`. (Guide coming soon).
+2. SSH into the device (or connect with Serial), login with default credentials. You will be prompted to change this upon first login.
+3. Run `mpwrd-menu` to setup Meshtastic, change settings, and more!
 
 ## Using this repo
 
