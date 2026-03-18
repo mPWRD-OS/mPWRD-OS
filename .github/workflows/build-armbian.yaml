@@ -27,11 +27,13 @@ jobs:
           - uefi-x86_64
       fail-fast: false
     steps:
-      - name: Checkout armbian/build (main) into workspace root
+      - name: Checkout armbian/build into workspace root
         uses: actions/checkout@v6
         with:
           repository: armbian/build
-          ref: main
+          # Pin to "stable" Armbian tag 'v26.5.0' when released.
+          # For now, a tested-working "trunk" tag is used.
+          ref: v26.2.0-trunk.589
 
       - name: Checkout current repository into userpatches
         uses: actions/checkout@v6
