@@ -33,7 +33,7 @@ jobs:
           repository: armbian/build
           # Pin to "stable" Armbian tag 'v26.5.0' when released.
           # For now, a tested-working "trunk" tag is used.
-          ref: v26.2.0-trunk.589
+          ref: v26.2.0-trunk.623
 
       - name: Checkout current repository into userpatches
         uses: actions/checkout@v6
