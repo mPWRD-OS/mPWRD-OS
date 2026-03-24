@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# mPWRD-OS Commands
+
+set -o pipefail
+
+GREEN=$'\e[32m'
+BLUE=$'\e[34m'
+BOLD=$'\e[1m'
+RESET=$'\e[0m'
+echo -n -e "\e[32m"
+cat << EOF
+${GREEN}mPWRD-OS${RESET} commands:
+  ${GREEN}${BOLD}mprwd-menu${RESET} - mPWRD-OS Main Menu
+  ${BLUE}contact${RESET} - TUI Chat application
+  ${GREEN}meshtastic${RESET} - Meshtastic CLI
+EOF
