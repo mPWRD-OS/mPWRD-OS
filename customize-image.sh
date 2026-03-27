@@ -59,7 +59,6 @@ Main() {
 	InstallAptPkg "meshtasticd"
 	InstallAptPkg "mpwrd-menu"
 	InstallAptPkg "pipx"
-	InstallAptPkg "avahi-daemon"
 	InstallAptPkg "cockpit cockpit-networkmanager"
 	case $pipx_g in
 		true)
