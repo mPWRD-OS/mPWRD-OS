@@ -60,6 +60,8 @@ Main() {
 	InstallAptPkg "mpwrd-menu"
 	InstallAptPkg "pipx"
 	InstallAptPkg "cockpit cockpit-networkmanager"
+	# Misc
+	InstallAptPkg "vim git i2c-tools net-tools fonts-noto-color-emoji"
 	case $pipx_g in
 		true)
 			InstallPipxPkg "meshtastic"
