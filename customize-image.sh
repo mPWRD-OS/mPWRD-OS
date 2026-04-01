@@ -230,9 +230,8 @@ BoardSpecific() {
 			;;
 		# raspberry-pi-64bit
 		rpi4b)
-			# Setup devicetree overlay for SPI stuff
-			# TODO Set meshtasticd MacAddressSource to 'eth0' for rpi4b
-			# MTSetMacSrc "eth0"
+			# Set meshtasticd MacAddressSource to 'end0' for Raspberry Pi
+			MTSetMacSrc "end0"
 			;;
 		*)
 			echo "No board-specific customizations for board: $BOARD"
