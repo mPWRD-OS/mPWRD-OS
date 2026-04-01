@@ -15,26 +15,32 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        config:
-          - ebyte-ecb41-pge
-          - forlinx-ok3506-s12
-          - luckfox-lyra-plus
-          - luckfox-lyra-ultra-w
-          - luckfox-lyra-zero-w
-          - luckfox-pico-max
-          - luckfox-pico-mini
-          - raspberry-pi-64bit
-          - uefi-x86_64
+        include:
+          - config: ebyte-ecb41-pge
+            armbian_ref: v26.2.0-trunk.655 # Dev
+          - config: forlinx-ok3506-s12
+            armbian_ref: v26.2.0-trunk.655 # Dev
+          - config: luckfox-lyra-plus
+            armbian_ref: v26.2.0-trunk.655 # Dev
+          - config: luckfox-lyra-ultra-w
+            armbian_ref: v26.2.0-trunk.655 # Dev
+          - config: luckfox-lyra-zero-w
+            armbian_ref: v26.2.0-trunk.655 # Dev
+          - config: luckfox-pico-max
+            armbian_ref: v26.2.0-trunk.655 # Dev
+          - config: luckfox-pico-mini
+            armbian_ref: v26.2.0-trunk.655 # Dev
+          - config: raspberry-pi-64bit
+            armbian_ref: v26.2.1 # Stable
+          - config: uefi-x86_64
+            armbian_ref: v26.2.0-trunk.655 # Dev
       fail-fast: false
     steps:
       - name: Checkout armbian/build into workspace root
         uses: actions/checkout@v6
         with:
           repository: armbian/build
-          # Pin to "stable" Armbian tag 'v26.5.0' when released.
-          # For now, a tested-working "trunk" tag is used.
-          ref: 64c212859f3a715f4077b3d4ef50a587b49a6221
-          # ref: v26.2.0-trunk.623
+          ref: ${{ matrix.armbian_ref }}
 
       - name: Checkout current repository into userpatches
         uses: actions/checkout@v6
