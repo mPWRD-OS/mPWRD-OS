@@ -8,6 +8,9 @@
 - 🐍 [meshtastic](https://meshtastic.org/docs/software/python/cli/) CLI pre-installed.
 - 📡 [contact](https://github.com/pdxlocations/contact) Meshtastic TUI pre-installed.
 - 🧙 [mpwrd-menu](https://github.com/mPWRD-OS/mpwrd-menu) simple OS / Meshtastic management utility.
+- 🔵 BLE WiFi provisioning via the Meshtastic Apps / Flasher.
+  - Powered by 🏠 [Nymea-NetworkManager](https://github.com/nymea/nymea-networkmanager)
+  - Currently only supported on Raspberry Pi.
 
 ## Board Support
 
