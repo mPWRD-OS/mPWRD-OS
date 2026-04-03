@@ -24,9 +24,9 @@ jobs:
           - config: luckfox-lyra-plus
             armbian_ref: v26.2.0-trunk.655 # Dev
           - config: luckfox-lyra-ultra-w
-            armbian_ref: v26.2.0-trunk.655 # Dev
+            armbian_ref: e78984b3c656c628bbae60464656a006edc13427 # Dev
           - config: luckfox-lyra-zero-w
-            armbian_ref: v26.2.0-trunk.655 # Dev
+            armbian_ref: e78984b3c656c628bbae60464656a006edc13427 # Dev
           - config: luckfox-pico-max
             armbian_ref: v26.2.0-trunk.655 # Dev
           - config: luckfox-pico-mini
