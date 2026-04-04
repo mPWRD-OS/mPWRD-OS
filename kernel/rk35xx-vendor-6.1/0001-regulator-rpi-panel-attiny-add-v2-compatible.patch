@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ruledo <ruledo707@gmail.com>
+Date: Fri, 3 Apr 2026 19:45:00 -0700
+Subject: [PATCH] regulator: rpi-panel-attiny: accept v2 touchscreen
+ compatible
+
+The current Rockchip vendor 6.1 tree already carries the Raspberry Pi
+Display 2 panel profile in `panel-ilitek-ili9881c.c`. The missing piece
+for the official Display 2 overlay is the newer ATTINY regulator
+compatible string used by the v2 touchscreen panel regulator node.
+
+Accept that compatible so the Lyra Zero W Display 2 overlay can bind the
+existing regulator driver without dragging in a redundant panel-driver
+backport.
+---
+ drivers/regulator/rpi-panel-attiny-regulator.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/regulator/rpi-panel-attiny-regulator.c b/drivers/regulator/rpi-panel-attiny-regulator.c
+index 29365a11f857..7eb548c21efd 100644
+--- a/drivers/regulator/rpi-panel-attiny-regulator.c
++++ b/drivers/regulator/rpi-panel-attiny-regulator.c
+@@ -389,6 +389,7 @@ static void attiny_i2c_remove(struct i2c_client *client)
+ 
+ static const struct of_device_id attiny_dt_ids[] = {
+ 	{ .compatible = "raspberrypi,7inch-touchscreen-panel-regulator" },
++	{ .compatible = "raspberrypi,v2-touchscreen-panel-regulator" },
+ 	{},
+ };
+ MODULE_DEVICE_TABLE(of, attiny_dt_ids);
+-- 
+2.43.0
