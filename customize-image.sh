@@ -217,8 +217,6 @@ BoardSpecific() {
 		luckfox-lyra-zero-w)
 			# Enable luckfox-lyra-zero-w-spi0-1cs-spidev overlay
 			EnableKernelDTOverlay "luckfox-lyra-zero-w-spi0-1cs-spidev"
-			# Configure the official Raspberry Pi Touch Display 2 (7-inch)
-			EnableUserDTOverlay "luckfox-lyra-zero-w-rpi-display2-7inch"
 			;;
 		luckfox-pico-max)
 			# Set meshtasticd MacAddressSource to 'eth0' for pico-max
