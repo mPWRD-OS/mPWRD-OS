@@ -1,10 +1,13 @@
 [Unit]
 Documentation=https://gitlab.postmarketos.org/postmarketOS/buffybox
-After=getty.target
+After=systemd-modules-load.service
+StartLimitIntervalSec=0
 
 [Service]
+ExecStartPre=/bin/sh -c 'i=0; while [ "$i" -lt 100 ]; do [ -c /dev/uinput ] && [ -e /dev/fb0 ] && exit 0; i=$((i+1)); sleep 0.1; done; exit 1'
 ExecStart=/usr/bin/buffyboard -d 100 -g 696x1280@-16,0
 Restart=on-failure
+RestartSec=1
 
 DevicePolicy=closed
 DeviceAllow=/dev/uinput rw
@@ -34,6 +37,3 @@ SystemCallArchitectures=native
 SystemCallFilter=@system-service
 SystemCallFilter=~@privileged
 SystemCallFilter=~@resources
-
-[Install]
-WantedBy=multi-user.target
