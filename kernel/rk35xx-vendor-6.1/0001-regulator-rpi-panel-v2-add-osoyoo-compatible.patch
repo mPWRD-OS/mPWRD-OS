@@ -1,0 +1,81 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Developer <developer@example.com>
+Date: Fri, 3 Apr 2026 00:00:00 +0000
+Subject: [PATCH] regulator: rpi-panel-v2: add Osoyoo 7-inch compatible
+
+The Osoyoo 7-inch 720x1280 DSI panel uses the same I2C MCU register model as
+the Raspberry Pi Touch Display 2 backlight regulator, but reports revision
+0x07 instead of the Raspberry Pi-specific revisions currently allowed by the
+driver.
+
+Add an Osoyoo-compatible OF match so the driver can bind without replacing the
+existing Raspberry Pi path, and allow revision 0x07 only for that compatible.
+---
+ drivers/regulator/rpi-panel-v2-regulator.c | 21 +++++++++++++++++++--
+ 1 file changed, 19 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/regulator/rpi-panel-v2-regulator.c b/drivers/regulator/rpi-panel-v2-regulator.c
+index 9396445f0867..335224a0323d 100644
+--- a/drivers/regulator/rpi-panel-v2-regulator.c
++++ b/drivers/regulator/rpi-panel-v2-regulator.c
+@@ -8,6 +8,7 @@
+ #include <linux/err.h>
+ #include <linux/fb.h>
+ #include <linux/gpio.h>
++#include <linux/of_device.h>
+ #include <linux/gpio/driver.h>
+ #include <linux/i2c.h>
+ #include <linux/module.h>
+@@ -27,6 +28,11 @@
+ 
+ #define NUM_GPIO	2
+ 
++enum rpi_panel_v2_variant {
++	RPI_PANEL_V2_VARIANT_RPI = 0,
++	RPI_PANEL_V2_VARIANT_OSOYOO,
++};
++
+ struct rpi_panel_v2_lcd {
+ 	struct mutex lock;
+ 	struct regmap *regmap;
+@@ -122,11 +128,15 @@ static int rpi_panel_v2_i2c_probe(struct i2c_client *i2c,
+ {
+ 	struct backlight_properties props = { };
+ 	struct backlight_device *bl;
+ 	struct rpi_panel_v2_lcd *state;
++	enum rpi_panel_v2_variant variant = RPI_PANEL_V2_VARIANT_RPI;
+ 	struct regmap *regmap;
+ 	unsigned int data;
+ 	int ret;
+ 
++	variant = (enum rpi_panel_v2_variant)(unsigned long)
++		  of_device_get_match_data(&i2c->dev);
++
+ 	state = devm_kzalloc(&i2c->dev, sizeof(*state), GFP_KERNEL);
+ 	if (!state)
+ 		return -ENOMEM;
+@@ -153,6 +166,10 @@ static int rpi_panel_v2_i2c_probe(struct i2c_client *i2c,
+ 	case 0x08:
+ 	case 0x09:
+ 		break;
++	case 0x07:
++		if (variant == RPI_PANEL_V2_VARIANT_OSOYOO)
++			break;
++		fallthrough;
+ 	default:
+ 		dev_err(&i2c->dev, "Unknown revision: 0x%02x\n", data & 0x0f);
+ 		ret = -ENODEV;
+@@ -209,7 +226,10 @@ static void rpi_panel_v2_i2c_shutdown(struct i2c_client *client)
+ }
+ 
+ static const struct of_device_id rpi_panel_v2_dt_ids[] = {
+-	{ .compatible = "raspberrypi,v2-touchscreen-panel-regulator" },
++	{ .compatible = "raspberrypi,v2-touchscreen-panel-regulator",
++	  .data = (void *)RPI_PANEL_V2_VARIANT_RPI },
++	{ .compatible = "osoyoo,touchscreen-panel-regulator",
++	  .data = (void *)RPI_PANEL_V2_VARIANT_OSOYOO },
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(of, rpi_panel_v2_dt_ids);
+-- 
+2.43.0
