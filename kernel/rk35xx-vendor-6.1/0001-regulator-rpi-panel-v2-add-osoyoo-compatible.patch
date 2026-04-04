@@ -15,7 +15,7 @@ existing Raspberry Pi path, and allow revision 0x07 only for that compatible.
  1 file changed, 19 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/regulator/rpi-panel-v2-regulator.c b/drivers/regulator/rpi-panel-v2-regulator.c
-index 9396445f0867..000000000000 100644
+index 9396445f0867..335224a0323d 100644
 --- a/drivers/regulator/rpi-panel-v2-regulator.c
 +++ b/drivers/regulator/rpi-panel-v2-regulator.c
 @@ -8,6 +8,7 @@
