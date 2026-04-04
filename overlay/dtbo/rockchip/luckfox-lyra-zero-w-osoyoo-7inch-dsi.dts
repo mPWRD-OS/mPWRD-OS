@@ -119,11 +119,6 @@
 	#size-cells = <0>;
 	clock-frequency = <50000>;
 
-	/delete-node/ ws-bl@45;
-	/delete-node/ gt9271@5d;
-	/delete-node/ gt911@14;
-	/delete-node/ ft5406@38;
-
 	display_mcu: display_mcu@45 {
 		compatible = "osoyoo,touchscreen-panel-regulator";
 		reg = <0x45>;
@@ -132,7 +127,7 @@
 		status = "okay";
 	};
 
-	gt911: gt911@5d {
+	display_gt911: gt911@5d {
 		compatible = "goodix,gt911";
 		reg = <0x5d>;
 		AVDD28-supply = <&touch_reg>;
@@ -166,4 +161,20 @@
 	vsync-active = <0>;
 	de-active = <0>;
 	pixelclk-active = <0>;
+};
+
+&gt9271 {
+	status = "disabled";
+};
+
+&gt911 {
+	status = "disabled";
+};
+
+&ft5406 {
+	status = "disabled";
+};
+
+&ws_bl {
+	status = "disabled";
 };
