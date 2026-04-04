@@ -1,0 +1,119 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Configure Luckfox Lyra Zero W for the official Raspberry Pi Touch Display 2
+ * 7-inch panel over the onboard DSI connector.
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	metadata {
+		title = "Enable Raspberry Pi Touch Display 2 (7-inch) on luckfox-lyra-zero-w";
+		compatible = "rockchip,rk3506b-lyra-zero";
+		category = "display";
+		description = "Switch DSI panel, touch, and backlight to the Raspberry Pi Display 2 profile.";
+	};
+
+	fragment@10 {
+		target-path = "/";
+
+		__overlay__ {
+			touch_reg: touch-reg {
+				compatible = "regulator-fixed";
+				regulator-name = "touch_reg_1";
+				gpio = <&display_mcu 1 0>;
+				startup-delay-us = <50000>;
+				enable-active-high;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+		};
+	};
+};
+
+&dsi {
+	/delete-node/ panel@0;
+
+	dsi_panel: panel@0 {
+		compatible = "raspberrypi,dsi-7inch";
+		reg = <0>;
+		status = "okay";
+
+		power-supply = <&vcc3v3_lcd>;
+		backlight = <&display_mcu>;
+		reset-gpios = <&display_mcu 0 1>;
+
+		dsi,flags = <0x00000a03>;
+		dsi,format = <0>;
+		dsi,lanes = <2>;
+
+		width-mm = <90>;
+		height-mm = <151>;
+	};
+};
+
+&i2c2 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <50000>;
+
+	display_mcu: display_mcu@45 {
+		compatible = "raspberrypi,v2-touchscreen-panel-regulator";
+		reg = <0x45>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		status = "okay";
+	};
+
+	display_gt911: gt911@5d {
+		compatible = "goodix,gt911";
+		reg = <0x5d>;
+		AVDD28-supply = <&touch_reg>;
+		VDDIO-supply = <&vcc3v3_lcd>;
+		touchscreen-size-x = <720>;
+		touchscreen-size-y = <1280>;
+		touchscreen-x-mm = <90>;
+		touchscreen-y-mm = <151>;
+		status = "okay";
+	};
+};
+
+&disp_timings0 {
+	native-mode = <&dsi_timing1>;
+};
+
+&dsi_timing1 {
+	clock-frequency = <83330000>;
+	hactive = <720>;
+	vactive = <1280>;
+
+	hsync-len = <33>;
+	hback-porch = <50>;
+	hfront-porch = <239>;
+
+	vsync-len = <2>;
+	vback-porch = <30>;
+	vfront-porch = <20>;
+
+	hsync-active = <0>;
+	vsync-active = <0>;
+	de-active = <0>;
+	pixelclk-active = <0>;
+};
+
+&gt9271 {
+	status = "disabled";
+};
+
+&gt911 {
+	status = "disabled";
+};
+
+&ft5406 {
+	status = "disabled";
+};
+
+&ws_bl {
+	status = "disabled";
+};

@@ -1,0 +1,39 @@
+[Unit]
+Documentation=https://gitlab.postmarketos.org/postmarketOS/buffybox
+After=getty.target
+
+[Service]
+ExecStart=/usr/bin/buffyboard -d 100 -g 696x1280@-16,0
+Restart=on-failure
+
+DevicePolicy=closed
+DeviceAllow=/dev/uinput rw
+DeviceAllow=char-fb rw
+DeviceAllow=char-input rw
+DeviceAllow=char-tty rw
+RestrictAddressFamilies=AF_NETLINK
+
+CapabilityBoundingSet=
+NoNewPrivileges=true
+RestrictSUIDSGID=true
+PrivateMounts=true
+PrivateTmp=true
+PrivateUsers=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+RemoveIPC=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged
+SystemCallFilter=~@resources
+
+[Install]
+WantedBy=multi-user.target

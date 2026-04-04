@@ -124,6 +124,15 @@ InstallPipxPkg() {
 	# --global flag requires pipx 1.5.0 or newer
 } # InstallPipxPkg
 
+InstallRemoteDeb() {
+	DEB_URL="$1"
+	DEB_FILE="/tmp/$(basename "${DEB_URL}")"
+	echo "DEB: Installing ${DEB_URL}..."
+	curl -fsSL "${DEB_URL}" -o "${DEB_FILE}"
+	apt-get --yes --allow-unauthenticated install "${DEB_FILE}"
+	rm -f "${DEB_FILE}"
+} # InstallRemoteDeb
+
 CleanupApt() {
 	apt-get clean
 	rm -rf /var/lib/apt/lists/*
@@ -217,6 +226,10 @@ BoardSpecific() {
 		luckfox-lyra-zero-w)
 			# Enable luckfox-lyra-zero-w-spi0-1cs-spidev overlay
 			EnableKernelDTOverlay "luckfox-lyra-zero-w-spi0-1cs-spidev"
+			# Install the framebuffer console keyboard for touch-only login/testing
+			InstallRemoteDeb "https://deb.debian.org/debian/pool/main/b/buffybox/buffyboard_3.4.2+dfsg-1_armhf.deb"
+			mkdir -p /etc/systemd/system/multi-user.target.wants
+			ln -sf ../buffyboard.service /etc/systemd/system/multi-user.target.wants/buffyboard.service
 			;;
 		luckfox-pico-max)
 			# Set meshtasticd MacAddressSource to 'eth0' for pico-max
