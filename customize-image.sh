@@ -213,6 +213,12 @@ MTSetMacSrc() {
 
 BoardSpecific() {
 	case $BOARD in
+		ebyte-ecb41-pge)
+			# Enable ebyte-ecb41-pge-spi0-1cs-spidev overlay
+			EnableUserDTOverlay "ebyte-ecb41-pge-spi0-1cs-spidev"
+			# Set meshtasticd MacAddressSource to 'end0' for ebyte-ecb41-pge
+			MTSetMacSrc "end0"
+			;;
 		forlinx-ok3506-s12)
 			# Enable forlinx-ok3506-s12-spi0-1cs-spidev overlay
 			EnableKernelDTOverlay "forlinx-ok3506-s12-spi0-1cs-spidev"
