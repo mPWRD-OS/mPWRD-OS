@@ -8,14 +8,16 @@ RED=$'\e[31m'
 GREEN=$'\e[32m'
 YELLOW=$'\e[33m'
 BLUE=$'\e[34m'
+GREY=$'\e[90m'
 BOLD=$'\e[1m'
 RESET=$'\e[0m'
-echo -n -e "\e[32m"
+echo ""
 cat << EOF
-${GREEN}mPWRD-OS${RESET} commands:
-  ${GREEN}${BOLD}mprwd-menu${RESET} - mPWRD-OS Main Menu
-  ${RED}armbian-config${RESET} - Armbian Configuration Utility
-  ${YELLOW}htop${RESET} - System monitoring
-  ${BLUE}contact${RESET} - TUI Chat application
-  ${GREEN}meshtastic${RESET} - Meshtastic CLI
+ ${GREEN}mPWRD-OS ${GREY}Commands:${RESET}
+
+ ${GREEN}${BOLD}mprwd-menu${RESET} - mPWRD-OS Main Menu
+ ${RED}armbian-config${RESET} - Armbian Configuration Utility
+ ${YELLOW}htop${RESET} - System monitoring
+ ${BLUE}contact${RESET} - TUI Chat application
+ ${GREEN}meshtastic${RESET} - Meshtastic CLI
 EOF
