@@ -74,6 +74,7 @@ Main() {
 	esac
 	# Always run
 	ApplyFSOverlay
+	BoardSpecific "$@"
 	CleanupApt
 	CompileDTBO
 } # Main
@@ -177,7 +178,31 @@ EnableKernelDTOverlay() {
 	else
 		echo "Warning: /boot/armbianEnv.txt not found, cannot enable device tree overlays"
 	fi
-}
+} # EnableKernelDTOverlay
+
+__ConfigNymeaNM() {
+	# https://github.com/nymea/nymea-networkmanager/#configuration
+	# Set Mode to 'once' in nymea-networkmanager config
+	sed -i 's/^Mode=.*/Mode=once/' /etc/nymea/nymea-networkmanager.conf
+	# Set AdvertiseName to 'mpwrd-nm' in nymea-networkmanager config
+	sed -i 's/^AdvertiseName=.*/AdvertiseName=mpwrd-nm/' /etc/nymea/nymea-networkmanager.conf
+	# Set PlatformName to 'mpwrd-os' in nymea-networkmanager config
+	sed -i 's/^PlatformName=.*/PlatformName=mpwrd-os/' /etc/nymea/nymea-networkmanager.conf
+} # __ConfigNymeaNM
+
+NymeaNM() {
+	# Nymea-NetworkManager BLE WiFi provisioning
+	# Only tested on trixie
+	case $RELEASE in
+		trixie)
+			InstallAptPkg "nymea-networkmanager"
+			__ConfigNymeaNM
+			;;
+		*)
+			echo "Nymea-NetworkManager not supported on release: $RELEASE"
+			;;
+	esac
+} # NymeaNM
 
 MTSetMacSrc() {
 	iface_name="$1"
@@ -230,6 +255,8 @@ BoardSpecific() {
 			;;
 		# raspberry-pi-64bit
 		rpi4b)
+			# Enable Nymea-NetworkManager (BLE WiFi provisioning)
+			NymeaNM
 			# Set meshtasticd MacAddressSource to 'end0' for Raspberry Pi
 			MTSetMacSrc "end0"
 			;;
@@ -242,4 +269,3 @@ BoardSpecific() {
 } # BoardSpecific
 
 Main "$@"
-BoardSpecific "$@"
