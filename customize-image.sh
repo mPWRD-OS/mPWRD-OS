@@ -222,8 +222,8 @@ BoardSpecific() {
 		forlinx-ok3506-s12)
 			# Enable forlinx-ok3506-s12-spi0-1cs-spidev overlay
 			EnableKernelDTOverlay "forlinx-ok3506-s12-spi0-1cs-spidev"
-			# Set meshtasticd MacAddressSource to 'end1' for forlinx-ok3506-s12
-			MTSetMacSrc "end1"
+			# Set meshtasticd MacAddressSource to 'end0' for forlinx-ok3506-s12
+			MTSetMacSrc "end0"
 			;;
 		luckfox-lyra-plus)
 			# Enable luckfox-lyra-plus-spi0-1cs_rmio13-spidev overlay
