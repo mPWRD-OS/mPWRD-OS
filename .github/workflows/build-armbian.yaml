@@ -58,6 +58,7 @@ jobs:
           PREFER_DOCKER=yes
           KERNEL_CONFIGURE=no
           SHARE_LOGS=no
+          UBOOT_BINS_TO_OUTPUT=yes
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v7
