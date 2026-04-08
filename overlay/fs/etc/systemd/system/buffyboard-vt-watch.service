@@ -1,0 +1,13 @@
+[Unit]
+Description=Restart buffyboard on VT switches
+After=systemd-logind.service buffyboard.service
+Wants=buffyboard.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/buffyboard-vt-watch
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target
