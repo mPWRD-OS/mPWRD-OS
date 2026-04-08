@@ -1,0 +1,180 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Configure Luckfox Lyra Zero W for the Osoyoo 7-inch 720x1280 DSI panel.
+ *
+ * This overlay is additive and opt-in. It does not replace the default Lyra
+ * display path unless user_overlays explicitly selects it.
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	metadata {
+		title = "Enable Osoyoo 7-inch 720x1280 DSI panel on luckfox-lyra-zero-w";
+		compatible = "rockchip,rk3506b-lyra-zero";
+		category = "display";
+		description = "Switch DSI panel, touch, and backlight to the Osoyoo 7-inch DSI profile.";
+	};
+
+	fragment@10 {
+		target-path = "/";
+
+		__overlay__ {
+			touch_reg: touch-reg {
+				compatible = "regulator-fixed";
+				regulator-name = "touch_reg_1";
+				gpio = <&display_mcu 1 0>;
+				startup-delay-us = <50000>;
+				enable-active-high;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+		};
+	};
+};
+
+&dsi_panel {
+	compatible = "osoyoo,dsi-7inch";
+	status = "okay";
+
+	power-supply = <&vcc_3v3>;
+	backlight = <&display_mcu>;
+	reset-gpios = <&display_mcu 0 0>;
+
+	prepare-delay-ms = <0>;
+	reset-delay-ms = <60>;
+	init-delay-ms = <60>;
+	disable-delay-ms = <0>;
+	unprepare-delay-ms = <0>;
+	bpc = <8>;
+
+	dsi,flags = <0x00000801>;
+	dsi,format = <0>;
+	dsi,lanes = <2>;
+
+	width-mm = <90>;
+	height-mm = <151>;
+
+	panel-init-sequence = [
+		39 00 04 ff 98 81 03 15 00 02 01 00 15 00 02 02 00 15 00 02 03 73
+		15 00 02 04 00 15 00 02 05 00 15 00 02 06 0a 15 00 02 07 00
+		15 00 02 08 00 15 00 02 09 00 15 00 02 0a 00 15 00 02 0b 00
+		15 00 02 0c 01 15 00 02 0d 00 15 00 02 0e 00 15 00 02 0f 17
+		15 00 02 10 17 15 00 02 11 00 15 00 02 12 00 15 00 02 13 00
+		15 00 02 14 00 15 00 02 15 00 15 00 02 16 00 15 00 02 17 00
+		15 00 02 18 00 15 00 02 19 00 15 00 02 1a 00 15 00 02 1b 00
+		15 00 02 1c 00 15 00 02 1d 00 15 00 02 1e 40 15 00 02 1f 80
+		15 00 02 20 06 15 00 02 21 01 15 00 02 22 00 15 00 02 23 00
+		15 00 02 24 00 15 00 02 25 00 15 00 02 26 00 15 00 02 27 00
+		15 00 02 28 33 15 00 02 29 03 15 00 02 2a 00 15 00 02 2b 00
+		15 00 02 2c 00 15 00 02 2d 00 15 00 02 2e 00 15 00 02 2f 00
+		15 00 02 30 00 15 00 02 31 00 15 00 02 32 00 15 00 02 33 00
+		15 00 02 34 04 15 00 02 35 00 15 00 02 36 00 15 00 02 37 00
+		15 00 02 38 3c 15 00 02 39 00 15 00 02 3a 00 15 00 02 3b 00
+		15 00 02 3c 00 15 00 02 3d 00 15 00 02 3e 00 15 00 02 3f 00
+		15 00 02 40 00 15 00 02 41 00 15 00 02 42 00 15 00 02 43 00
+		15 00 02 44 00 15 00 02 50 10 15 00 02 51 32 15 00 02 52 54
+		15 00 02 53 76 15 00 02 54 98 15 00 02 55 ba 15 00 02 56 10
+		15 00 02 57 32 15 00 02 58 54 15 00 02 59 76 15 00 02 5a 98
+		15 00 02 5b ba 15 00 02 5c dc 15 00 02 5d fe 15 00 02 5e 00
+		15 00 02 5f 0e 15 00 02 60 0f 15 00 02 61 0c 15 00 02 62 0d
+		15 00 02 63 06 15 00 02 64 07 15 00 02 65 02 15 00 02 66 02
+		15 00 02 67 02 15 00 02 68 02 15 00 02 69 01 15 00 02 6a 00
+		15 00 02 6b 02 15 00 02 6c 15 15 00 02 6d 14 15 00 02 6e 02
+		15 00 02 6f 02 15 00 02 70 02 15 00 02 71 02 15 00 02 72 02
+		15 00 02 73 02 15 00 02 74 02 15 00 02 75 0e 15 00 02 76 0f
+		15 00 02 77 0c 15 00 02 78 0d 15 00 02 79 06 15 00 02 7a 07
+		15 00 02 7b 02 15 00 02 7c 02 15 00 02 7d 02 15 00 02 7e 02
+		15 00 02 7f 01 15 00 02 80 00 15 00 02 81 02 15 00 02 82 14
+		15 00 02 83 15 15 00 02 84 02 15 00 02 85 02 15 00 02 86 02
+		15 00 02 87 02 15 00 02 88 02 15 00 02 89 02 15 00 02 8a 02
+		39 00 04 ff 98 81 04 15 00 02 6c 15 15 00 02 6e 2a 15 00 02 6f 37
+		15 00 02 3b 98 15 00 02 3a 94 15 00 02 8d 1f 15 00 02 87 ba
+		15 00 02 26 76 15 00 02 b2 d1 15 00 02 b5 06 15 00 02 38 01
+		15 00 02 39 00 39 00 04 ff 98 81 01 15 00 02 b7 03 15 00 02 22 0a
+		15 00 02 2e c8 15 00 02 31 00 15 00 02 53 5d 15 00 02 55 5d
+		15 00 02 40 33 15 00 02 50 85 15 00 02 51 85 15 00 02 60 26
+		15 00 02 a0 08 15 00 02 a1 0b 15 00 02 a2 18 15 00 02 a3 15
+		15 00 02 a4 16 15 00 02 a5 29 15 00 02 a6 1e 15 00 02 a7 1e
+		15 00 02 a8 57 15 00 02 a9 1c 15 00 02 aa 2a 15 00 02 ab 43
+		15 00 02 ac 1f 15 00 02 ad 20 15 00 02 ae 52 15 00 02 af 2a
+		15 00 02 b0 30 15 00 02 b1 32 15 00 02 b2 60 15 00 02 b3 39
+		15 00 02 c0 08 15 00 02 c1 24 15 00 02 c2 2e 15 00 02 c3 0d
+		15 00 02 c4 12 15 00 02 c5 23 15 00 02 c6 18 15 00 02 c7 1b
+		15 00 02 c8 85 15 00 02 c9 1b 15 00 02 ca 27 15 00 02 cb 75
+		15 00 02 cc 1a 15 00 02 cd 18 15 00 02 ce 50 15 00 02 cf 22
+		15 00 02 d0 22 15 00 02 d1 50 15 00 02 d2 67 15 00 02 d3 39
+		39 00 04 ff 98 81 00 15 00 02 35 00 05 78 01 11 05 00 01 29
+	];
+
+	panel-exit-sequence = [
+		05 00 01 28
+		05 78 01 10
+	];
+};
+
+&i2c2 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <50000>;
+
+	display_mcu: display_mcu@45 {
+		compatible = "osoyoo,touchscreen-panel-regulator";
+		reg = <0x45>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		status = "okay";
+	};
+
+	display_gt911: gt911@5d {
+		compatible = "goodix,gt911";
+		reg = <0x5d>;
+		AVDD28-supply = <&touch_reg>;
+		VDDIO-supply = <&vcc_3v3>;
+		touchscreen-size-x = <720>;
+		touchscreen-size-y = <1280>;
+		touchscreen-x-mm = <87>;
+		touchscreen-y-mm = <155>;
+		status = "okay";
+	};
+};
+
+&disp_timings0 {
+	native-mode = <&dsi_timing1>;
+};
+
+&dsi_timing1 {
+	clock-frequency = <51200000>;
+	hactive = <720>;
+	vactive = <1280>;
+
+	hsync-len = <6>;
+	hback-porch = <10>;
+	hfront-porch = <20>;
+
+	vsync-len = <6>;
+	vback-porch = <20>;
+	vfront-porch = <50>;
+
+	hsync-active = <0>;
+	vsync-active = <0>;
+	de-active = <0>;
+	pixelclk-active = <0>;
+};
+
+&gt9271 {
+	status = "disabled";
+};
+
+&gt911 {
+	status = "disabled";
+};
+
+&ft5406 {
+	status = "disabled";
+};
+
+&ws_bl {
+	status = "disabled";
+};
