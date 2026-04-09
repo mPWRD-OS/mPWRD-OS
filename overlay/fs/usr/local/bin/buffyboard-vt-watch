@@ -1,0 +1,48 @@
+#!/usr/bin/python3
+import fcntl
+import os
+import struct
+import subprocess
+import time
+
+VT_WAITEVENT = 0x560E
+VT_EVENT_SWITCH = 0x0001
+EVENT_STRUCT = "7I"
+WATCH_TTYS = set(range(1, 7))
+
+
+def main():
+    fd = os.open("/dev/tty1", os.O_RDONLY | os.O_NONBLOCK)
+
+    while True:
+        event_buf = bytearray(
+            struct.pack(EVENT_STRUCT, VT_EVENT_SWITCH, 0, 0, 0, 0, 0, 0)
+        )
+        fcntl.ioctl(fd, VT_WAITEVENT, event_buf, True)
+        event, old_vt, new_vt, _unused1, _unused2, _unused3, _unused4 = struct.unpack(
+            EVENT_STRUCT, event_buf
+        )
+
+        if not (event & VT_EVENT_SWITCH):
+            continue
+        if new_vt not in WATCH_TTYS:
+            continue
+
+        subprocess.run(
+            [
+                "/usr/bin/logger",
+                "-t",
+                "buffyboard-vt-watch",
+                f"vt switch {old_vt}->{new_vt}, restarting buffyboard",
+            ],
+            check=False,
+        )
+        time.sleep(0.25)
+        subprocess.run(
+            ["/usr/bin/systemctl", "try-restart", "buffyboard.service"],
+            check=False,
+        )
+
+
+if __name__ == "__main__":
+    main()
