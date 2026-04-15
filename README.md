@@ -19,12 +19,12 @@ See: [Board Support](https://github.com/mPWRD-OS/mPWRD-OS/wiki/Board-Support) wi
 | Chipset  | Board                    | Status    | `meshtasticd` status |
 | -------- | ------------------------ | --------- | -------------------- |
 | BCM2711  | 🍓 Raspberry Pi (64-bit) | Supported | ✅ `beta`            |
-| RK3506G  | 🛜 EByte ECB41-PGE       | Supported | 🚧 `daily` (2.7.22+) |
+| RK3506G  | 🛜 EByte ECB41-PGE       | Supported | 🧪 `alpha`           |
 | RK3506G  | 🦊 Luckfox Lyra Plus     | Supported | 🧪 `alpha`           |
 | RK3506B  | 🦊 Luckfox Lyra Ultra W  | Supported | 🧪 `alpha`           |
 | RK3506B  | 🦊 Luckfox Lyra Zero W   | Supported | 🧪 `alpha`           |
-| RK3506J  | 🐈 ForLinx OK3506-S12    | Supported | 🚧 `daily` (2.7.22+) |
-| RV1106G  | 🦊 Luckfox Pico Max      | Todo      |                      |
+| RK3506J  | 🐈 ForLinx OK3506-S12    | Supported | 🧪 `alpha`           |
+| RV1106G  | 🦊 Luckfox Pico Max      | WIP       | 🚧                   |
 | RV1103G  | 🦊🤏 Luckfox Pico Mini   | Supported | ✅ `beta`            |
 | RV1103B  | 🧅 OnionIOT Omega4       | Todo      |                      |
 | UEFI     | 🖥️ Generic x86_64 UEFI   | Dev       | ✅ `beta`            |
