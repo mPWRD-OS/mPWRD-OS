@@ -24,23 +24,15 @@ export APT_LISTCHANGES_FRONTEND=none
 # Release-specific variables
 case $RELEASE in
 	trixie)
-		DISTRIBUTION="Debian"
-		obs_slug="Debian_13"
 		pipx_g=true
 		;;
 	bookworm)
-		DISTRIBUTION="Debian"
-		obs_slug="Debian_12"
 		pipx_g=false
 		;;
 	resolute)
-		DISTRIBUTION="Ubuntu"
-		obs_slug="xUbuntu_26.04"
 		pipx_g=true
 		;;
 	noble)
-		DISTRIBUTION="Ubuntu"
-		obs_slug="xUbuntu_24.04"
 		pipx_g=false
 		;;
 	*)
@@ -52,15 +44,11 @@ esac
 
 Main() {
 	apt-get update
-	InstallAptPkg "gpg"
-	AddMPWRD_Repo_OBS
-	apt-get update
+	# meshtasticd can't currently be installed via the `meshtasticd` Extension
+	# due to a race condition with the gpio group when installing before family-tweaks.
 	InstallAptPkg "meshtasticd"
-	InstallAptPkg "mpwrd-menu"
-	InstallAptPkg "pipx"
-	InstallAptPkg "cockpit cockpit-networkmanager"
-	# Misc
-	InstallAptPkg "vim git i2c-tools net-tools fonts-noto-color-emoji"
+	# Same story with i2c-tools. Race condition with i2c group in family-tweaks.
+	InstallAptPkg "i2c-tools"
 	case $pipx_g in
 		true)
 			InstallPipxPkg "meshtastic"
@@ -74,7 +62,7 @@ Main() {
 	# Always run
 	ApplyFSOverlay
 	BoardSpecific "$@"
-	CleanupApt
+	apt-get clean && rm -rf /var/lib/apt/lists/*
 	CompileDTBO
 } # Main
 
@@ -83,11 +71,6 @@ ApplyFSOverlay() {
 	# replacing existing files
 	cp -r /tmp/overlay/fs/* /
 } # ApplyFSOverlay
-
-AddMPWRD_Repo_OBS() {
-	echo "deb http://download.opensuse.org/repositories/home:/mPWRD:/OS/$obs_slug/ /" | tee /etc/apt/sources.list.d/home:mPWRD:OS.list
-	curl -fsSL https://download.opensuse.org/repositories/home:mPWRD:OS/$obs_slug/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/home_mPWRD_OS.gpg > /dev/null
-} # AddMPWRD_Repo_OBS
 
 InstallAptPkg() {
 	PKGSPEC="$1"
@@ -103,11 +86,6 @@ InstallPipxPkg() {
 	pipx install --global "${PKGSPEC}"
 	# --global flag requires pipx 1.5.0 or newer
 } # InstallPipxPkg
-
-CleanupApt() {
-	apt-get clean
-	rm -rf /var/lib/apt/lists/*
-} # CleanupApt
 
 CompileDTBO() {
 	# Always compile DTBOs for each family (even if not enabled by default)

@@ -35,6 +35,5 @@ function custom_apt_repo__add_meshtasticd_repo() {
 # Temporarily disabled: gpio + ic2 groups race condition
 # Instead installed with customize-image.sh
 # function extension_prepare_config__add_meshtasticd() {
-#     display_alert "Extension: ${EXTENSION}: Adding extra package to image" "meshtasticd" "info"
-#     add_packages_to_image meshtasticd
+# 	add_packages_to_image meshtasticd
 # }
