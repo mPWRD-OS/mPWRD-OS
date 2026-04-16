@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # arguments: $RELEASE $LINUXFAMILY $BOARD $BUILD_DESKTOP
 #
@@ -15,11 +16,16 @@
 RELEASE=$1
 LINUXFAMILY=$2
 BOARD=$3
+# shellcheck disable=SC2034 # Armbian passes this argument; this script does not currently branch on it.
 BUILD_DESKTOP=$4
 
 # 'Global' env vars for all functions in this script
 export DEBIAN_FRONTEND=noninteractive
 export APT_LISTCHANGES_FRONTEND=none
+
+APT_KEYRING_DIR="/etc/apt/keyrings"
+MESHTASTIC_OBS_KEYRING="${APT_KEYRING_DIR}/network_Meshtastic_beta.gpg"
+MPWRD_OBS_KEYRING="${APT_KEYRING_DIR}/home_mPWRD_OS.gpg"
 
 # Release-specific variables
 case $RELEASE in
@@ -30,6 +36,11 @@ case $RELEASE in
 		pipx_g=false
 		;;
 	resolute)
+		DISTRIBUTION="Ubuntu"
+		# Temporary fallback: mPWRD OBS does not publish xUbuntu_26.04 yet.
+		# Remove this once https://download.opensuse.org/repositories/home:/mPWRD:/OS/xUbuntu_26.04/ exists.
+		# obs_slug="xUbuntu_26.04"
+		obs_slug="xUbuntu_24.04"
 		pipx_g=true
 		;;
 	noble)
@@ -72,12 +83,48 @@ ApplyFSOverlay() {
 	cp -r /tmp/overlay/fs/* /
 } # ApplyFSOverlay
 
+AddMeshtasticRepo() {
+	case $DISTRIBUTION in
+		Debian)
+			__AddMeshtasticRepo_Debian_OBS
+			;;
+		Ubuntu)
+			__AddMeshtasticRepo_Ubuntu_PPA
+			;;
+	esac
+} # AddMeshtasticRepo
+
+__AddMeshtasticRepo_Debian_OBS() {
+	install -d -m 0755 "${APT_KEYRING_DIR}"
+	curl -fsSL "https://download.opensuse.org/repositories/network:/Meshtastic:/beta/${obs_slug}/Release.key" |
+		gpg --dearmor --batch --yes -o "${MESHTASTIC_OBS_KEYRING}"
+	chmod 0644 "${MESHTASTIC_OBS_KEYRING}"
+	echo "deb [signed-by=${MESHTASTIC_OBS_KEYRING}] https://download.opensuse.org/repositories/network:/Meshtastic:/beta/${obs_slug}/ /" |
+		tee /etc/apt/sources.list.d/network:Meshtastic:beta.list
+} # __AddMeshtasticRepo_Debian_OBS
+
+__AddMeshtasticRepo_Ubuntu_PPA() {
+	add-apt-repository --yes ppa:meshtastic/beta
+} # __AddMeshtasticRepo_Ubuntu_PPA
+
+AddMPWRD_Repo_OBS() {
+	install -d -m 0755 "${APT_KEYRING_DIR}"
+	curl -fsSL "https://download.opensuse.org/repositories/home:/mPWRD:/OS/${obs_slug}/Release.key" |
+		gpg --dearmor --batch --yes -o "${MPWRD_OBS_KEYRING}"
+	chmod 0644 "${MPWRD_OBS_KEYRING}"
+	echo "deb [signed-by=${MPWRD_OBS_KEYRING}] https://download.opensuse.org/repositories/home:/mPWRD:/OS/${obs_slug}/ /" |
+		tee /etc/apt/sources.list.d/home:mPWRD:OS.list
+} # AddMPWRD_Repo_OBS
+
 InstallAptPkg() {
-	PKGSPEC="$1"
+	local PKGSPEC="$1"
+	local packages=()
+
 	# Install package via apt-get
 	echo "APT: Installing ${PKGSPEC}..."
-	apt-get --yes --allow-unauthenticated \
-		install $PKGSPEC
+	read -r -a packages <<< "${PKGSPEC}"
+	apt-get --yes \
+		install "${packages[@]}"
 } # InstallAptPkg
 
 InstallPipxPkg() {
@@ -108,9 +155,9 @@ EnableUserDTOverlay() {
 	# Enable overlays (space separated)
 	# in /boot/armbianEnv.txt
 	if [ -f /boot/armbianEnv.txt ]; then
-		if grep -q "user_overlays=" /boot/armbianEnv.txt; then
+		if grep -q "^user_overlays=" /boot/armbianEnv.txt; then
 			# Append to existing user_overlays
-			sed -i "s/user_overlays=\(.*\)/user_overlays=\1 ${USER_OVERLAYS}/" /boot/armbianEnv.txt
+			sed -i "s/^user_overlays=\(.*\)/user_overlays=\1 ${USER_OVERLAYS}/" /boot/armbianEnv.txt
 		else
 			# Add new user_overlays line
 			echo "user_overlays=${USER_OVERLAYS}" >> /boot/armbianEnv.txt
@@ -125,9 +172,9 @@ EnableKernelDTOverlay() {
 	echo "Enabling kernel (builtin) overlay: ${OVERLAY_NAME}"
 	# Enable overlay in /boot/armbianEnv.txt
 	if [ -f /boot/armbianEnv.txt ]; then
-		if grep -q "overlays=" /boot/armbianEnv.txt; then
+		if grep -q "^overlays=" /boot/armbianEnv.txt; then
 			# Append to existing overlays
-			sed -i "s/overlays=\(.*\)/overlays=\1 ${OVERLAY_NAME}/" /boot/armbianEnv.txt
+			sed -i "s/^overlays=\(.*\)/overlays=\1 ${OVERLAY_NAME}/" /boot/armbianEnv.txt
 		else
 			# Add new overlays line
 			echo "overlays=${OVERLAY_NAME}" >> /boot/armbianEnv.txt
@@ -139,10 +186,27 @@ EnableKernelDTOverlay() {
 
 
 MTSetMacSrc() {
-	iface_name="$1"
+	local iface_name="$1"
+	local config_file="/etc/meshtasticd/config.yaml"
+
 	# Set the General.MACAddressSource to $iface_name
 	# for meshtasticd (/etc/meshtasticd/config.yaml)
-	sed -i "s/^#\?  MACAddressSource: .*/  MACAddressSource: $iface_name/" /etc/meshtasticd/config.yaml
+	if [ ! -f "${config_file}" ]; then
+		echo "Error: ${config_file} not found; cannot set MACAddressSource" >&2
+		exit 1
+	fi
+
+	if ! grep -Eq '^[[:space:]]*#?[[:space:]]*MACAddressSource:' "${config_file}"; then
+		echo "Error: MACAddressSource not found in ${config_file}; cannot set it to ${iface_name}" >&2
+		exit 1
+	fi
+
+	sed -i "s/^[[:space:]]*#\?[[:space:]]*MACAddressSource:.*/  MACAddressSource: ${iface_name}/" "${config_file}"
+
+	if ! grep -Eq "^[[:space:]]*MACAddressSource:[[:space:]]*${iface_name}([[:space:]]|$)" "${config_file}"; then
+		echo "Error: failed to set MACAddressSource to ${iface_name} in ${config_file}" >&2
+		exit 1
+	fi
 } # MTSetMacSrc
 
 BoardSpecific() {

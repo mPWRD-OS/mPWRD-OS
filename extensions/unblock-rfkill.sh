@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 #
 # Unblock rfkill at boot by creating a systemd service that runs 'rfkill unblock all'
 # Inspired by: https://github.com/armbian/build/blob/main/config/sources/families/bcm2711.conf
@@ -10,7 +11,8 @@ function pre_install_distribution_specific__unblock_rfkill() {
 	cat > "${SDCARD}/etc/systemd/system/unblock-rfkill.service" <<- EOT
 	[Unit]
 	Description=Unblock rfkill
-	After=multi-user.target
+	Before=network-pre.target NetworkManager.service bluetooth.service
+	Wants=network-pre.target
 
 	[Service]
 	Type=oneshot
@@ -18,7 +20,7 @@ function pre_install_distribution_specific__unblock_rfkill() {
 	RemainAfterExit=true
 
 	[Install]
-	WantedBy=multi-user.target
+	WantedBy=network-pre.target
 	EOT
 	# Enable the service to run at boot
 	display_alert "Enabling unblock-rfkill service" "$BOARD" "info"

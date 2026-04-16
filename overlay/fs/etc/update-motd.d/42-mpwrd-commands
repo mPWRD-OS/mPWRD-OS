@@ -15,7 +15,7 @@ echo ""
 cat << EOF
  ${GREEN}mPWRD-OS ${GREY}Commands:${RESET}
 
- ${GREEN}${BOLD}mprwd-menu${RESET} - mPWRD-OS Main Menu
+ ${GREEN}${BOLD}mpwrd-menu${RESET} - mPWRD-OS Main Menu
  ${RED}armbian-config${RESET} - Armbian Configuration Utility
  ${YELLOW}htop${RESET} - System monitoring
  ${BLUE}contact${RESET} - TUI Chat application

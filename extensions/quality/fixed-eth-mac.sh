@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 #
 # Set deterministic Ethernet MAC addresses from board serial on boot.
 #
@@ -135,7 +136,7 @@ EOF
 	cat > "${service_path}" <<'EOF'
 [Unit]
 Description=Set deterministic Ethernet MAC addresses from board serial
-Before=network-pre.target
+Before=NetworkManager.service systemd-networkd.service network-pre.target
 Wants=network-pre.target
 After=systemd-udevd.service
 ConditionPathExists=/sys/class/net
