@@ -53,7 +53,6 @@ esac
 Main() {
 	apt-get update
 	InstallAptPkg "gpg"
-	AddMeshtasticRepo
 	AddMPWRD_Repo_OBS
 	apt-get update
 	InstallAptPkg "meshtasticd"
@@ -84,26 +83,6 @@ ApplyFSOverlay() {
 	# replacing existing files
 	cp -r /tmp/overlay/fs/* /
 } # ApplyFSOverlay
-
-AddMeshtasticRepo() {
-	case $DISTRIBUTION in
-		Debian)
-			__AddMeshtasticRepo_Debian_OBS
-			;;
-		Ubuntu)
-			__AddMeshtasticRepo_Ubuntu_PPA
-			;;
-	esac
-} # AddMeshtasticRepo
-
-__AddMeshtasticRepo_Debian_OBS() {
-	echo "deb http://download.opensuse.org/repositories/network:/Meshtastic:/beta/$obs_slug/ /" | tee /etc/apt/sources.list.d/network:Meshtastic:beta.list
-	curl -fsSL https://download.opensuse.org/repositories/network:Meshtastic:beta/$obs_slug/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/network_Meshtastic_beta.gpg > /dev/null
-} # __AddMeshtasticRepo_Debian_OBS
-
-__AddMeshtasticRepo_Ubuntu_PPA() {
-	add-apt-repository --yes ppa:meshtastic/beta
-} # __AddMeshtasticRepo_Ubuntu_PPA
 
 AddMPWRD_Repo_OBS() {
 	echo "deb http://download.opensuse.org/repositories/home:/mPWRD:/OS/$obs_slug/ /" | tee /etc/apt/sources.list.d/home:mPWRD:OS.list
