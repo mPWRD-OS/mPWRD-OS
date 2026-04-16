@@ -231,7 +231,7 @@ BoardSpecific() {
 			# Set meshtasticd MacAddressSource to 'end1' for lyra-plus
 			MTSetMacSrc "end1"
 			# Download waveshare pico config for lyra-plus
-			curl -fsSL https://raw.githubusercontent.com/meshtastic/firmware/refs/tags/v2.7.20.6658ec2/bin/config.d/lora-lyra-ws-raspberry-pi-pico-hat.yaml \
+			curl -fsSL https://raw.githubusercontent.com/meshtastic/firmware/refs/tags/v2.7.22.96dd647/bin/config.d/lora-lyra-ws-raspberry-pi-pico-hat.yaml \
 				-o /etc/meshtasticd/config.d/lora-lyra-ws-raspberry-pi-pico-hat.yaml
 			;;
 		luckfox-lyra-ultra-w)
@@ -242,7 +242,7 @@ BoardSpecific() {
 			# Set meshtasticd MacAddressSource to 'end1' for lyra-ultra-w
 			MTSetMacSrc "end1"
 			# Download 'Luckfox Ultra' 2W hat config for lyra-ultra
-			curl -fsSL https://raw.githubusercontent.com/meshtastic/firmware/refs/tags/v2.7.20.6658ec2/bin/config.d/lora-lyra-ultra_2w.yaml \
+			curl -fsSL https://raw.githubusercontent.com/meshtastic/firmware/refs/tags/v2.7.22.96dd647/bin/config.d/lora-lyra-ultra_2w.yaml \
 				-o /etc/meshtasticd/config.d/lora-lyra-ultra_2w.yaml
 			;;
 		luckfox-lyra-zero-w)
@@ -252,12 +252,16 @@ BoardSpecific() {
 		luckfox-pico-max)
 			# Set meshtasticd MacAddressSource to 'eth0' for pico-max
 			MTSetMacSrc "eth0"
+			# Download waveshare pico config for pico-max (from develop branch)
+			curl -fsSL https://github.com/meshtastic/firmware/raw/466cc4cecddd11cd1bb0d0b166bd658d116832b3/bin/config.d/lora-luckfox-pico-max-ws-raspberry-pi-pico-hat.yaml \
+				-o /etc/meshtasticd/config.d/lora-luckfox-pico-max-ws-raspberry-pi-pico-hat.yaml
 			;;
 		luckfox-pico-mini)
 			# Set meshtasticd MacAddressSource to 'eth0' for pico-mini
 			MTSetMacSrc "eth0"
-			# Copy femtofox config for pico-mini
-			cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d/
+			# Download femtofox config for pico-mini (directory changed upstream)
+			curl -fsSL https://raw.githubusercontent.com/meshtastic/firmware/refs/tags/v2.7.22.96dd647/bin/config.d/lora-femtofox_SX1262_TCXO.yaml \
+				-o /etc/meshtasticd/config.d/lora-femtofox_SX1262_TCXO.yaml
 			;;
 		# raspberry-pi-64bit
 		rpi4b)
