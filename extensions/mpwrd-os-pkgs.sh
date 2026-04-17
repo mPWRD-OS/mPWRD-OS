@@ -1,28 +1,38 @@
+# shellcheck shell=bash
+#
 # Add mPWRD-OS repo
 # install mpwrd-menu
 
-function custom_apt_repo__add_mpwrd_repo() {
-	case $RELEASE in
+function __mpwrd_obs_slug() {
+	case "${RELEASE}" in
 		trixie)
-			obs_slug="Debian_13"
+			printf '%s\n' "Debian_13"
 			;;
 		bookworm)
-			obs_slug="Debian_12"
+			printf '%s\n' "Debian_12"
 			;;
 		resolute)
-			obs_slug="xUbuntu_26.04"
+			printf '%s\n' "xUbuntu_26.04"
 			;;
 		noble)
-			obs_slug="xUbuntu_24.04"
+			printf '%s\n' "xUbuntu_24.04"
 			;;
 		*)
 			display_alert "Unsupported ${DISTRIBUTION} release: ${RELEASE}"
 			exit 1
 			;;
 	esac
+}
+
+function custom_apt_repo__add_mpwrd_repo() {
+	local obs_slug
+	obs_slug="$(__mpwrd_obs_slug)"
 	display_alert "Adding mPWRD-OS OBS repository for ${DISTRIBUTION} ${RELEASE} (${obs_slug})..."
-	run_host_command_logged echo "deb http://download.opensuse.org/repositories/home:/mPWRD:/OS/$obs_slug/ /" | tee "${SDCARD}/etc/apt/sources.list.d/home:mPWRD:OS.list"
-	run_host_command_logged curl -fsSL https://download.opensuse.org/repositories/home:mPWRD:OS/$obs_slug/Release.key | gpg --dearmor | tee "${SDCARD}/etc/apt/trusted.gpg.d/home_mPWRD_OS.gpg" > /dev/null
+	__obs_bootstrap_add_signed_repo \
+		"https://download.opensuse.org/repositories/home:/mPWRD:/OS/${obs_slug}/" \
+		"https://download.opensuse.org/repositories/home:mPWRD:OS/${obs_slug}/Release.key" \
+		"home:mPWRD:OS.list" \
+		"home_mPWRD_OS.gpg"
 }
 
 function extension_prepare_config__add_mpwrd_os() {

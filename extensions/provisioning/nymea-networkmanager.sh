@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+#
 # Nymea-NetworkManager BLE WiFi provisioning
 # https://github.com/nymea/nymea-networkmanager/#configuration
 

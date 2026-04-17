@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+#
 # Install misc packages
 # Not necessary for mPWRD-OS core functionality, but nice to have around.
 

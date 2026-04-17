@@ -57,20 +57,6 @@ assert_contains "customize-image.sh" '^set -euo pipefail$' \
 	"customize-image.sh must run with strict shell settings"
 assert_not_contains "customize-image.sh" '--allow-unauthenticated' \
 	"apt installs must not allow unauthenticated packages"
-assert_contains "customize-image.sh" 'https://download\.opensuse\.org/repositories/network:/Meshtastic:/beta/' \
-	"Meshtastic OBS apt source must use HTTPS"
-assert_contains "customize-image.sh" 'https://download\.opensuse\.org/repositories/home:/mPWRD:/OS/' \
-	"mPWRD OBS apt source must use HTTPS"
-assert_contains "customize-image.sh" 'MESHTASTIC_OBS_KEYRING="\$\{APT_KEYRING_DIR\}/network_Meshtastic_beta\.gpg"' \
-	"Meshtastic OBS keyring path must be under /etc/apt/keyrings"
-assert_contains "customize-image.sh" 'signed-by=\$\{MESHTASTIC_OBS_KEYRING\}' \
-	"Meshtastic OBS apt source must use signed-by keyring"
-assert_contains "customize-image.sh" 'MPWRD_OBS_KEYRING="\$\{APT_KEYRING_DIR\}/home_mPWRD_OS\.gpg"' \
-	"mPWRD OBS keyring path must be under /etc/apt/keyrings"
-assert_contains "customize-image.sh" 'signed-by=\$\{MPWRD_OBS_KEYRING\}' \
-	"mPWRD OBS apt source must use signed-by keyring"
-assert_release_case_contains "resolute" 'obs_slug="xUbuntu_24[.]04"' \
-	"resolute must temporarily use the published xUbuntu_24.04 mPWRD OBS repository"
 assert_contains "customize-image.sh" 'grep -q "\^user_overlays="' \
 	"user_overlays detection must be anchored"
 assert_contains "customize-image.sh" 'grep -q "\^overlays="' \
@@ -84,15 +70,107 @@ trap 'rm -rf "${tmpdir}"' EXIT
 export SDCARD="${tmpdir}/sdcard"
 export BOARD="test-board"
 export EXTENSION="test-extension"
-mkdir -p "${SDCARD}/etc/systemd/system"
+mkdir -p "${SDCARD}/etc/apt" "${SDCARD}/etc/systemd/system"
 
 display_alert() {
 	:
 }
 
+run_host_command_logged() {
+	case "$1" in
+		install | chmod)
+			"$@"
+			;;
+		curl)
+			shift
+			local output=""
+			while (($#)); do
+				case "$1" in
+					-o)
+						output="$2"
+						shift 2
+						;;
+					*)
+						shift
+						;;
+				esac
+			done
+			printf 'fake release key\n' > "${output}"
+			;;
+		gpg)
+			shift
+			local output=""
+			local input=""
+			while (($#)); do
+				case "$1" in
+					-o)
+						output="$2"
+						shift 2
+						;;
+					--batch | --yes | --dearmor)
+						shift
+						;;
+					*)
+						input="$1"
+						shift
+						;;
+				esac
+			done
+			cp "${input}" "${output}"
+			;;
+		*)
+			fail "unsupported run_host_command_logged stub invocation: $*"
+			;;
+	esac
+}
+
+do_with_retries() {
+	printf '%s\n' "$*" > "${tmpdir}/do_with_retries.log"
+}
+
 chroot_sdcard() {
 	:
 }
+
+# shellcheck source=/dev/null
+source "${repo_root}/extensions/obs-bootstrap.sh"
+# shellcheck source=/dev/null
+source "${repo_root}/extensions/meshtasticd.sh"
+# shellcheck source=/dev/null
+source "${repo_root}/extensions/mpwrd-os-pkgs.sh"
+
+export DISTRIBUTION="Debian"
+export RELEASE="trixie"
+export MESHTASTICD_CHANNEL="beta"
+custom_apt_repo__add_meshtasticd_repo
+
+meshtastic_repo_list="${SDCARD}/etc/apt/sources.list.d/network:Meshtastic:beta.list"
+meshtastic_keyring="${SDCARD}/etc/apt/keyrings/network_Meshtastic_beta.gpg"
+assert_contains "${meshtastic_repo_list}" '^deb \[signed-by=/etc/apt/keyrings/network_Meshtastic_beta\.gpg\] https://download\.opensuse\.org/repositories/network:/Meshtastic:/beta/Debian_13/ /$' \
+	"Meshtastic OBS apt source must use HTTPS and signed-by keyring"
+assert_not_contains "${meshtastic_repo_list}" 'http://' \
+	"Meshtastic OBS apt source must not use HTTP"
+assert_contains "${meshtastic_keyring}" 'fake release key' \
+	"Meshtastic OBS keyring must be written under /etc/apt/keyrings"
+if [[ -e "${SDCARD}/etc/apt/trusted.gpg.d/network_Meshtastic_beta.gpg" ]]; then
+	fail "Meshtastic OBS keyring must not be written under trusted.gpg.d"
+fi
+
+export DISTRIBUTION="Ubuntu"
+export RELEASE="resolute"
+custom_apt_repo__add_mpwrd_repo
+
+mpwrd_repo_list="${SDCARD}/etc/apt/sources.list.d/home:mPWRD:OS.list"
+mpwrd_keyring="${SDCARD}/etc/apt/keyrings/home_mPWRD_OS.gpg"
+assert_contains "${mpwrd_repo_list}" '^deb \[signed-by=/etc/apt/keyrings/home_mPWRD_OS\.gpg\] https://download\.opensuse\.org/repositories/home:/mPWRD:/OS/xUbuntu_26\.04/ /$' \
+	"resolute must use the published xUbuntu_26.04 mPWRD OBS repository with signed-by"
+assert_not_contains "${mpwrd_repo_list}" 'http://' \
+	"mPWRD OBS apt source must not use HTTP"
+assert_contains "${mpwrd_keyring}" 'fake release key' \
+	"mPWRD OBS keyring must be written under /etc/apt/keyrings"
+if [[ -e "${SDCARD}/etc/apt/trusted.gpg.d/home_mPWRD_OS.gpg" ]]; then
+	fail "mPWRD OBS keyring must not be written under trusted.gpg.d"
+fi
 
 # shellcheck source=/dev/null
 source "${repo_root}/extensions/quality/fixed-eth-mac.sh"
