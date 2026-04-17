@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 #
 # Disable background apt activity in the final image.
 #

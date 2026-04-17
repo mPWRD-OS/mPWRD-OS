@@ -15,7 +15,7 @@ function pre_umount_final_image__perf_tmp_rootfs_apply() {
 	install -d -m 1777 "${MOUNT}/tmp"
 	install -d -m 1777 "${MOUNT}${MPWRD_TMP_DIR}"
 
-	# Create a /tmp bind mount at /opt/tmp
+	# Bind /opt/tmp onto /tmp so writes use rootfs-backed storage.
 	echo "${MPWRD_TMP_DIR} /tmp none bind 0 0" >> "${MOUNT}/etc/fstab"
 
 	return 0

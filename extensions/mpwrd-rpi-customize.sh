@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Enable SPI and I2C
 
 # Run after pre_umount_final_image__write_raspi_config
