@@ -137,29 +137,6 @@ EnableKernelDTOverlay() {
 	fi
 } # EnableKernelDTOverlay
 
-__ConfigNymeaNM() {
-	# https://github.com/nymea/nymea-networkmanager/#configuration
-	# Set Mode to 'once' in nymea-networkmanager config
-	sed -i 's/^Mode=.*/Mode=once/' /etc/nymea/nymea-networkmanager.conf
-	# Set AdvertiseName to 'mpwrd-nm' in nymea-networkmanager config
-	sed -i 's/^AdvertiseName=.*/AdvertiseName=mpwrd-nm/' /etc/nymea/nymea-networkmanager.conf
-	# Set PlatformName to 'mpwrd-os' in nymea-networkmanager config
-	sed -i 's/^PlatformName=.*/PlatformName=mpwrd-os/' /etc/nymea/nymea-networkmanager.conf
-} # __ConfigNymeaNM
-
-NymeaNM() {
-	# Nymea-NetworkManager BLE WiFi provisioning
-	# Only tested on trixie
-	case $RELEASE in
-		trixie)
-			InstallAptPkg "nymea-networkmanager"
-			__ConfigNymeaNM
-			;;
-		*)
-			echo "Nymea-NetworkManager not supported on release: $RELEASE"
-			;;
-	esac
-} # NymeaNM
 
 MTSetMacSrc() {
 	iface_name="$1"
@@ -169,6 +146,8 @@ MTSetMacSrc() {
 } # MTSetMacSrc
 
 BoardSpecific() {
+	# Note: Board specific customizations may also be added via Extensions
+	# See extensions/ directory
 	case $BOARD in
 		ebyte-ecb41-pge)
 			# Enable ebyte-ecb41-pge-spi0-1cs-spidev overlay
@@ -222,8 +201,6 @@ BoardSpecific() {
 			;;
 		# raspberry-pi-64bit
 		rpi4b)
-			# Enable Nymea-NetworkManager (BLE WiFi provisioning)
-			NymeaNM
 			# Set meshtasticd MacAddressSource to 'end0' for Raspberry Pi
 			MTSetMacSrc "end0"
 			;;
