@@ -23,10 +23,6 @@ BUILD_DESKTOP=$4
 export DEBIAN_FRONTEND=noninteractive
 export APT_LISTCHANGES_FRONTEND=none
 
-APT_KEYRING_DIR="/etc/apt/keyrings"
-MESHTASTIC_OBS_KEYRING="${APT_KEYRING_DIR}/network_Meshtastic_beta.gpg"
-MPWRD_OBS_KEYRING="${APT_KEYRING_DIR}/home_mPWRD_OS.gpg"
-
 # Release-specific variables
 case $RELEASE in
 	trixie)
@@ -36,11 +32,6 @@ case $RELEASE in
 		pipx_g=false
 		;;
 	resolute)
-		DISTRIBUTION="Ubuntu"
-		# Temporary fallback: mPWRD OBS does not publish xUbuntu_26.04 yet.
-		# Remove this once https://download.opensuse.org/repositories/home:/mPWRD:/OS/xUbuntu_26.04/ exists.
-		# obs_slug="xUbuntu_26.04"
-		obs_slug="xUbuntu_24.04"
 		pipx_g=true
 		;;
 	noble)
@@ -55,11 +46,6 @@ esac
 
 Main() {
 	apt-get update
-	# meshtasticd can't currently be installed via the `meshtasticd` Extension
-	# due to a race condition with the gpio group when installing before family-tweaks.
-	InstallAptPkg "meshtasticd"
-	# Same story with i2c-tools. Race condition with i2c group in family-tweaks.
-	InstallAptPkg "i2c-tools"
 	case $pipx_g in
 		true)
 			InstallPipxPkg "meshtastic"
@@ -82,50 +68,6 @@ ApplyFSOverlay() {
 	# replacing existing files
 	cp -r /tmp/overlay/fs/* /
 } # ApplyFSOverlay
-
-AddMeshtasticRepo() {
-	case $DISTRIBUTION in
-		Debian)
-			__AddMeshtasticRepo_Debian_OBS
-			;;
-		Ubuntu)
-			__AddMeshtasticRepo_Ubuntu_PPA
-			;;
-	esac
-} # AddMeshtasticRepo
-
-__AddMeshtasticRepo_Debian_OBS() {
-	install -d -m 0755 "${APT_KEYRING_DIR}"
-	curl -fsSL "https://download.opensuse.org/repositories/network:/Meshtastic:/beta/${obs_slug}/Release.key" |
-		gpg --dearmor --batch --yes -o "${MESHTASTIC_OBS_KEYRING}"
-	chmod 0644 "${MESHTASTIC_OBS_KEYRING}"
-	echo "deb [signed-by=${MESHTASTIC_OBS_KEYRING}] https://download.opensuse.org/repositories/network:/Meshtastic:/beta/${obs_slug}/ /" |
-		tee /etc/apt/sources.list.d/network:Meshtastic:beta.list
-} # __AddMeshtasticRepo_Debian_OBS
-
-__AddMeshtasticRepo_Ubuntu_PPA() {
-	add-apt-repository --yes ppa:meshtastic/beta
-} # __AddMeshtasticRepo_Ubuntu_PPA
-
-AddMPWRD_Repo_OBS() {
-	install -d -m 0755 "${APT_KEYRING_DIR}"
-	curl -fsSL "https://download.opensuse.org/repositories/home:/mPWRD:/OS/${obs_slug}/Release.key" |
-		gpg --dearmor --batch --yes -o "${MPWRD_OBS_KEYRING}"
-	chmod 0644 "${MPWRD_OBS_KEYRING}"
-	echo "deb [signed-by=${MPWRD_OBS_KEYRING}] https://download.opensuse.org/repositories/home:/mPWRD:/OS/${obs_slug}/ /" |
-		tee /etc/apt/sources.list.d/home:mPWRD:OS.list
-} # AddMPWRD_Repo_OBS
-
-InstallAptPkg() {
-	local PKGSPEC="$1"
-	local packages=()
-
-	# Install package via apt-get
-	echo "APT: Installing ${PKGSPEC}..."
-	read -r -a packages <<< "${PKGSPEC}"
-	apt-get --yes \
-		install "${packages[@]}"
-} # InstallAptPkg
 
 InstallPipxPkg() {
 	PKGSPEC="$1"
