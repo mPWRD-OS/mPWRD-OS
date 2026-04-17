@@ -58,7 +58,6 @@ Main() {
 	esac
 	# Always run
 	ApplyFSOverlay
-	BoardSpecific "$@"
 	apt-get clean && rm -rf /var/lib/apt/lists/*
 	CompileDTBO
 } # Main
@@ -91,131 +90,6 @@ CompileDTBO() {
 	shopt -u nullglob
 } # CompileDTBO
 
-EnableUserDTOverlay() {
-	USER_OVERLAYS="$1"
-	echo "Enabling user_overlays: ${USER_OVERLAYS}"
-	# Enable overlays (space separated)
-	# in /boot/armbianEnv.txt
-	if [ -f /boot/armbianEnv.txt ]; then
-		if grep -q "^user_overlays=" /boot/armbianEnv.txt; then
-			# Append to existing user_overlays
-			sed -i "s/^user_overlays=\(.*\)/user_overlays=\1 ${USER_OVERLAYS}/" /boot/armbianEnv.txt
-		else
-			# Add new user_overlays line
-			echo "user_overlays=${USER_OVERLAYS}" >> /boot/armbianEnv.txt
-		fi
-	else
-		echo "Warning: /boot/armbianEnv.txt not found, cannot enable device tree overlays"
-	fi
-} # EnableUserDTOverlay
 
-EnableKernelDTOverlay() {
-	OVERLAY_NAME="$1"
-	echo "Enabling kernel (builtin) overlay: ${OVERLAY_NAME}"
-	# Enable overlay in /boot/armbianEnv.txt
-	if [ -f /boot/armbianEnv.txt ]; then
-		if grep -q "^overlays=" /boot/armbianEnv.txt; then
-			# Append to existing overlays
-			sed -i "s/^overlays=\(.*\)/overlays=\1 ${OVERLAY_NAME}/" /boot/armbianEnv.txt
-		else
-			# Add new overlays line
-			echo "overlays=${OVERLAY_NAME}" >> /boot/armbianEnv.txt
-		fi
-	else
-		echo "Warning: /boot/armbianEnv.txt not found, cannot enable device tree overlays"
-	fi
-} # EnableKernelDTOverlay
-
-
-MTSetMacSrc() {
-	local iface_name="$1"
-	local config_file="/etc/meshtasticd/config.yaml"
-
-	# Set the General.MACAddressSource to $iface_name
-	# for meshtasticd (/etc/meshtasticd/config.yaml)
-	if [ ! -f "${config_file}" ]; then
-		echo "Error: ${config_file} not found; cannot set MACAddressSource" >&2
-		exit 1
-	fi
-
-	if ! grep -Eq '^[[:space:]]*#?[[:space:]]*MACAddressSource:' "${config_file}"; then
-		echo "Error: MACAddressSource not found in ${config_file}; cannot set it to ${iface_name}" >&2
-		exit 1
-	fi
-
-	sed -i "s/^[[:space:]]*#\?[[:space:]]*MACAddressSource:.*/  MACAddressSource: ${iface_name}/" "${config_file}"
-
-	if ! grep -Eq "^[[:space:]]*MACAddressSource:[[:space:]]*${iface_name}([[:space:]]|$)" "${config_file}"; then
-		echo "Error: failed to set MACAddressSource to ${iface_name} in ${config_file}" >&2
-		exit 1
-	fi
-} # MTSetMacSrc
-
-BoardSpecific() {
-	# Note: Board specific customizations may also be added via Extensions
-	# See extensions/ directory
-	case $BOARD in
-		ebyte-ecb41-pge)
-			# Enable ebyte-ecb41-pge-spi0-1cs-spidev overlay
-			EnableUserDTOverlay "ebyte-ecb41-pge-spi0-1cs-spidev"
-			# Set meshtasticd MacAddressSource to 'end0' for ebyte-ecb41-pge
-			MTSetMacSrc "end0"
-			;;
-		forlinx-ok3506-s12)
-			# Enable forlinx-ok3506-s12-spi0-1cs-spidev overlay
-			EnableKernelDTOverlay "forlinx-ok3506-s12-spi0-1cs-spidev"
-			# Set meshtasticd MacAddressSource to 'end0' for forlinx-ok3506-s12
-			MTSetMacSrc "end0"
-			;;
-		luckfox-lyra-plus)
-			# Enable luckfox-lyra-plus-spi0-1cs_rmio13-spidev overlay
-			EnableKernelDTOverlay "luckfox-lyra-plus-spi0-1cs_rmio13-spidev"
-			# Set meshtasticd MacAddressSource to 'end1' for lyra-plus
-			MTSetMacSrc "end1"
-			# Download waveshare pico config for lyra-plus
-			curl -fsSL https://raw.githubusercontent.com/meshtastic/firmware/refs/tags/v2.7.22.96dd647/bin/config.d/lora-lyra-ws-raspberry-pi-pico-hat.yaml \
-				-o /etc/meshtasticd/config.d/lora-lyra-ws-raspberry-pi-pico-hat.yaml
-			;;
-		luckfox-lyra-ultra-w)
-			# Enable devicetree overlays
-			EnableKernelDTOverlay "luckfox-lyra-ultra-w-spi0-1cs-spidev"
-			EnableUserDTOverlay "luckfox-lyra-ultra-w-uart1"
-			EnableUserDTOverlay "luckfox-lyra-ultra-w-i2c0"
-			# Set meshtasticd MacAddressSource to 'end1' for lyra-ultra-w
-			MTSetMacSrc "end1"
-			# Download 'Luckfox Ultra' 2W hat config for lyra-ultra
-			curl -fsSL https://raw.githubusercontent.com/meshtastic/firmware/refs/tags/v2.7.22.96dd647/bin/config.d/lora-lyra-ultra_2w.yaml \
-				-o /etc/meshtasticd/config.d/lora-lyra-ultra_2w.yaml
-			;;
-		luckfox-lyra-zero-w)
-			# Enable luckfox-lyra-zero-w-spi0-1cs-spidev overlay
-			EnableKernelDTOverlay "luckfox-lyra-zero-w-spi0-1cs-spidev"
-			;;
-		luckfox-pico-max)
-			# Set meshtasticd MacAddressSource to 'eth0' for pico-max
-			MTSetMacSrc "eth0"
-			# Download waveshare pico config for pico-max (from develop branch)
-			curl -fsSL https://github.com/meshtastic/firmware/raw/466cc4cecddd11cd1bb0d0b166bd658d116832b3/bin/config.d/lora-luckfox-pico-max-ws-raspberry-pi-pico-hat.yaml \
-				-o /etc/meshtasticd/config.d/lora-luckfox-pico-max-ws-raspberry-pi-pico-hat.yaml
-			;;
-		luckfox-pico-mini)
-			# Set meshtasticd MacAddressSource to 'eth0' for pico-mini
-			MTSetMacSrc "eth0"
-			# Download femtofox config for pico-mini (directory changed upstream)
-			curl -fsSL https://raw.githubusercontent.com/meshtastic/firmware/refs/tags/v2.7.22.96dd647/bin/config.d/lora-femtofox_SX1262_TCXO.yaml \
-				-o /etc/meshtasticd/config.d/lora-femtofox_SX1262_TCXO.yaml
-			;;
-		# raspberry-pi-64bit
-		rpi4b)
-			# Set meshtasticd MacAddressSource to 'end0' for Raspberry Pi
-			MTSetMacSrc "end0"
-			;;
-		*)
-			echo "No board-specific customizations for board: $BOARD"
-			;;
-	esac
-	# Fix ownership for meshtasticd configs
-	chown -R meshtasticd:meshtasticd /etc/meshtasticd/config.d
-} # BoardSpecific
 
 Main "$@"

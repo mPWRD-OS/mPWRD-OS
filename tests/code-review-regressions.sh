@@ -57,12 +57,20 @@ assert_contains "customize-image.sh" '^set -euo pipefail$' \
 	"customize-image.sh must run with strict shell settings"
 assert_not_contains "customize-image.sh" '--allow-unauthenticated' \
 	"apt installs must not allow unauthenticated packages"
-assert_contains "customize-image.sh" 'grep -q "\^user_overlays="' \
-	"user_overlays detection must be anchored"
-assert_contains "customize-image.sh" 'grep -q "\^overlays="' \
-	"overlays detection must be anchored"
-assert_contains "customize-image.sh" 'MACAddressSource.*not found' \
+assert_contains "extensions/meshtasticd.sh" '^function post_family_tweaks__700_install_meshtasticd\(\)' \
+	"meshtasticd extension must install packages via a real post_family_tweaks hook"
+assert_contains "extensions/meshtasticd.sh" '^function post_family_tweaks__710_configure_meshtasticd\(\)' \
+	"meshtasticd extension must configure board-specific state via a real post_family_tweaks hook"
+assert_contains "extensions/meshtasticd.sh" 'grep -q "\^user_overlays="' \
+	"user_overlays detection must be anchored in the meshtasticd extension"
+assert_contains "extensions/meshtasticd.sh" 'grep -q "\^overlays="' \
+	"overlays detection must be anchored in the meshtasticd extension"
+assert_contains "extensions/meshtasticd.sh" 'MACAddressSource.*not found' \
 	"Meshtastic MACAddressSource update must fail clearly when key is missing"
+assert_contains "extensions/meshtasticd.sh" '\$\{SDCARD\}/etc/meshtasticd/config\.yaml' \
+	"meshtasticd config updates in the extension must target the image root via SDCARD"
+assert_contains "extensions/meshtasticd.sh" 'chroot_sdcard apt-get --yes install meshtasticd i2c-tools' \
+	"meshtasticd extension install hook must install meshtasticd and i2c-tools via chroot"
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "${tmpdir}"' EXIT
@@ -129,7 +137,7 @@ do_with_retries() {
 }
 
 chroot_sdcard() {
-	:
+	printf '%s\n' "$*" >> "${tmpdir}/chroot.log"
 }
 
 # shellcheck source=/dev/null
@@ -171,6 +179,33 @@ assert_contains "${mpwrd_keyring}" 'fake release key' \
 if [[ -e "${SDCARD}/etc/apt/trusted.gpg.d/home_mPWRD_OS.gpg" ]]; then
 	fail "mPWRD OBS keyring must not be written under trusted.gpg.d"
 fi
+
+: > "${tmpdir}/chroot.log"
+post_family_tweaks__700_install_meshtasticd
+assert_contains "${tmpdir}/chroot.log" '^apt-get --yes install meshtasticd i2c-tools$' \
+	"meshtasticd extension install hook must install meshtasticd and i2c-tools"
+
+mkdir -p "${SDCARD}/boot" "${SDCARD}/etc/meshtasticd/config.d"
+cat > "${SDCARD}/boot/armbianEnv.txt" <<'EOF_ARMBIANENV'
+verbosity=1
+EOF_ARMBIANENV
+cat > "${SDCARD}/etc/meshtasticd/config.yaml" <<'EOF_MESHTASTIC'
+General:
+  MACAddressSource: default
+EOF_MESHTASTIC
+
+export BOARD="luckfox-lyra-ultra-w"
+post_family_tweaks__710_configure_meshtasticd
+assert_contains "${SDCARD}/boot/armbianEnv.txt" '^overlays=luckfox-lyra-ultra-w-spi0-1cs-spidev$' \
+	"meshtasticd config hook must enable required kernel overlays"
+assert_contains "${SDCARD}/boot/armbianEnv.txt" '^user_overlays=luckfox-lyra-ultra-w-uart1 luckfox-lyra-ultra-w-i2c0$' \
+	"meshtasticd config hook must enable required user overlays"
+assert_contains "${SDCARD}/etc/meshtasticd/config.yaml" '^[[:space:]]*MACAddressSource:[[:space:]]*end1$' \
+	"meshtasticd config hook must update MACAddressSource for the target board"
+assert_contains "${SDCARD}/etc/meshtasticd/config.d/lora-lyra-ultra_2w.yaml" 'fake release key' \
+	"meshtasticd config hook must download the board-specific Meshtastic config fragment"
+assert_contains "${tmpdir}/chroot.log" '^chown -R meshtasticd:meshtasticd /etc/meshtasticd/config.d$' \
+	"meshtasticd config hook must fix ownership for config fragments"
 
 # shellcheck source=/dev/null
 source "${repo_root}/extensions/quality/fixed-eth-mac.sh"
