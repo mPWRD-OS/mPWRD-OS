@@ -10,7 +10,8 @@ function pre_install_distribution_specific__unblock_rfkill() {
 	cat > "${SDCARD}/etc/systemd/system/unblock-rfkill.service" <<- EOT
 	[Unit]
 	Description=Unblock rfkill
-	After=multi-user.target
+	After=systemd-modules-load.service
+	Before=network.target
 
 	[Service]
 	Type=oneshot
@@ -18,7 +19,7 @@ function pre_install_distribution_specific__unblock_rfkill() {
 	RemainAfterExit=true
 
 	[Install]
-	WantedBy=multi-user.target
+	WantedBy=network.target
 	EOT
 	# Enable the service to run at boot
 	display_alert "Enabling unblock-rfkill service" "$BOARD" "info"
