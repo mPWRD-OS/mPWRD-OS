@@ -194,14 +194,14 @@ BoardSpecific() {
 			EnableKernelDTOverlay "luckfox-lyra-zero-w-spi0-1cs-spidev"
 			# Install the framebuffer console keyboard for touch-only login/testing
 			InstallRemoteDeb "https://deb.debian.org/debian/pool/main/b/buffybox/buffyboard_3.4.2+dfsg-1_armhf.deb"
+			# Run the VT watcher independently after boot instead of from getty ExecStartPost.
+			mkdir -p /etc/systemd/system/multi-user.target.wants
+			ln -sf /etc/systemd/system/buffyboard-vt-watch.service \
+				/etc/systemd/system/multi-user.target.wants/buffyboard-vt-watch.service
 			# ttyS2 getty can stall boot on Lyra Zero W and is not needed for the
 			# touchscreen console login path.
 			ln -sf /dev/null /etc/systemd/system/serial-getty@ttyS2.service
 			;;
-		luckfox-pico-max)
-			# Set meshtasticd MacAddressSource to 'eth0' for pico-max
-			MTSetMacSrc "eth0"
-			# Download waveshare pico config for pico-max (from develop branch)
 		luckfox-lyra-zero-deck)
 			# Reuse the base Lyra Zero W SPI overlay.
 			EnableKernelDTOverlay "luckfox-lyra-zero-w-spi0-1cs-spidev"
@@ -210,10 +210,18 @@ BoardSpecific() {
 			EnableUserDTOverlay "luckfox-lyra-zero-w-osoyoo-7inch-dsi"
 			# Install the framebuffer console keyboard for touch-only login/testing
 			InstallRemoteDeb "https://deb.debian.org/debian/pool/main/b/buffybox/buffyboard_3.4.2+dfsg-1_armhf.deb"
+			# Run the VT watcher independently after boot instead of from getty ExecStartPost.
+			mkdir -p /etc/systemd/system/multi-user.target.wants
+			ln -sf /etc/systemd/system/buffyboard-vt-watch.service \
+				/etc/systemd/system/multi-user.target.wants/buffyboard-vt-watch.service
 			# ttyS2 getty can stall boot on Lyra Zero Deck and is not needed for the
 			# touchscreen console login path.
 			ln -sf /dev/null /etc/systemd/system/serial-getty@ttyS2.service
 			;;
+		luckfox-pico-max)
+			# Set meshtasticd MacAddressSource to 'eth0' for pico-max
+			MTSetMacSrc "eth0"
+			# Download waveshare pico config for pico-max (from develop branch)
 			curl -fsSL https://github.com/meshtastic/firmware/raw/466cc4cecddd11cd1bb0d0b166bd658d116832b3/bin/config.d/lora-luckfox-pico-max-ws-raspberry-pi-pico-hat.yaml \
 				-o /etc/meshtasticd/config.d/lora-luckfox-pico-max-ws-raspberry-pi-pico-hat.yaml
 			;;

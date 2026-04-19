@@ -1,7 +1,6 @@
 [Unit]
 Description=Restart buffyboard on VT switches
-After=systemd-logind.service buffyboard.service
-Wants=buffyboard.service
+After=systemd-logind.service buffyboard.service getty@tty1.service
 
 [Service]
 Type=simple
