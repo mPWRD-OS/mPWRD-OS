@@ -78,12 +78,38 @@ function lyra_deck_unl0kr__write_keyscript() {
 	cat > "${keyscript_file}" <<-'EOF'
 	#!/bin/sh
 
+	lyra_deck_seed_activate_display() {
+		for module in rockchipdrm panel-ilitek-ili9881c panel-osoyoo-dsi panel-simple rpi-panel-v2-regulator pwm_bl backlight; do
+			modprobe "${module}" >/dev/null 2>&1 || true
+		done
+
+		if [ -w /sys/class/graphics/fb0/blank ]; then
+			echo 0 > /sys/class/graphics/fb0/blank 2>/dev/null || true
+		fi
+
+		for backlight in /sys/class/backlight/*; do
+			[ -d "${backlight}" ] || continue
+			if [ -w "${backlight}/bl_power" ]; then
+				echo 0 > "${backlight}/bl_power" 2>/dev/null || true
+			fi
+			if [ -r "${backlight}/max_brightness" ] && [ -w "${backlight}/brightness" ]; then
+				max_brightness="$(cat "${backlight}/max_brightness" 2>/dev/null || true)"
+				[ -n "${max_brightness}" ] && printf '%s' "${max_brightness}" > "${backlight}/brightness" 2>/dev/null || true
+			fi
+		done
+
+		if [ -c /dev/tty1 ]; then
+			printf '\033[9;0]\033[2J\033[HUnlocking disk for first boot setup...\r\n' > /dev/tty1 2>/dev/null || true
+		fi
+	}
+
 	if [ -z "${CRYPTTAB_SOURCE}" ] || [ -z "${CRYPTTAB_NAME}" ]; then
 		echo "This is a crypttab keyscript script, don't run directly." 1>&2
 		exit 1
 	fi
 
 	if [ -r /root/.lyra-cryptroot-passphrase ]; then
+		lyra_deck_seed_activate_display
 		cat /root/.lyra-cryptroot-passphrase
 		exit 0
 	fi
@@ -168,6 +194,26 @@ function lyra_deck_unl0kr__write_firstlogin_cryptroot_helper() {
 		cryptsetup status "${mapper_name}" 2>/dev/null | awk '$1 == "device:" { print $2; exit }'
 	}
 
+	lyra_deck_firstlogin_refresh_keyboard() {
+		local current_tty
+
+		command -v systemctl >/dev/null 2>&1 || return 0
+		current_tty="$(tty 2>/dev/null || true)"
+		[[ "${current_tty}" == "/dev/tty1" ]] || return 0
+		systemctl try-restart buffyboard.service >/dev/null 2>&1 || true
+		sleep 0.2
+	}
+
+	lyra_deck_firstlogin_finish_resize_reboot() {
+		[[ -f /var/run/resize2fs-reboot ]] || return 0
+
+		echo -e "\nFirst boot storage resize is finishing. Rebooting now.\n"
+		sync
+		sleep 2
+		systemctl --no-block reboot >/dev/null 2>&1 || reboot -f >/dev/null 2>&1 || shutdown -r now >/dev/null 2>&1
+		exit 0
+	}
+
 	lyra_deck_firstlogin_cryptroot_prompt() {
 		local marker="/root/.lyra-cryptroot-passphrase-set"
 		local seed_file="/root/.lyra-cryptroot-passphrase"
@@ -180,6 +226,8 @@ function lyra_deck_unl0kr__write_firstlogin_cryptroot_helper() {
 		backing_device="$(lyra_deck_firstlogin_cryptroot_backing_device)"
 		[[ -n "${backing_device}" ]] || return 0
 
+		lyra_deck_firstlogin_refresh_keyboard
+
 		current_mode="prompt"
 		if [[ -r "${seed_file}" ]]; then
 			current_passphrase="$(cat "${seed_file}")"
@@ -187,7 +235,7 @@ function lyra_deck_unl0kr__write_firstlogin_cryptroot_helper() {
 		fi
 
 		echo ""
-		echo "Set the disk unlock passphrase."
+		echo "Set the disk unlock passphrase and wait for encryption to finish."
 
 		remaining_tries=3
 		while [[ "${remaining_tries}" -gt 0 ]]; do
@@ -263,14 +311,24 @@ function lyra_deck_unl0kr__patch_firstlogin() {
 	local firstlogin_file="${SDCARD}/usr/lib/armbian/armbian-firstlogin"
 
 	[[ -f "${firstlogin_file}" ]] || return 0
-	grep -q 'lyra_deck_firstlogin_cryptroot_prompt' "${firstlogin_file}" && return 0
 
-	sed -i '/\[\[ -z "\$PRESET_ROOT_PASSWORD" \]\] && echo "" # empty line/i \
+	if ! grep -q 'lyra_deck_firstlogin_cryptroot_prompt' "${firstlogin_file}"; then
+		sed -i '/\[\[ -z "\$PRESET_ROOT_PASSWORD" \]\] && echo "" # empty line/i \
 	if [[ -r /usr/lib/armbian/armbian-firstlogin-cryptroot ]]; then\
 		. /usr/lib/armbian/armbian-firstlogin-cryptroot\
 		lyra_deck_firstlogin_cryptroot_prompt || exit 1\
 	fi\
 ' "${firstlogin_file}"
+	fi
+
+	if ! grep -q 'lyra_deck_firstlogin_finish_resize_reboot' "${firstlogin_file}"; then
+		sed -i '/rpardini: hacks per-dm, very much legacy stuff that works by a miracle/i \
+if [[ -r /usr/lib/armbian/armbian-firstlogin-cryptroot ]]; then\
+	. /usr/lib/armbian/armbian-firstlogin-cryptroot\
+	lyra_deck_firstlogin_finish_resize_reboot\
+fi\
+' "${firstlogin_file}"
+	fi
 }
 
 function post_family_tweaks__configure_lyra_deck_firstlogin_cryptroot() {
