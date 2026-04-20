@@ -61,9 +61,46 @@ function lyra_deck_unl0kr__write_xkb_hook() {
 		mkdir -p "${DESTDIR}/usr/share/X11"
 		cp -a /usr/share/X11/xkb "${DESTDIR}/usr/share/X11/"
 	fi
+
+	if [ -r /root/.lyra-cryptroot-passphrase ]; then
+		mkdir -p "${DESTDIR}/root"
+		cp -a /root/.lyra-cryptroot-passphrase "${DESTDIR}/root/"
+	fi
 	EOF
 
 	chmod 0755 "${hook_file}"
+}
+
+function lyra_deck_unl0kr__write_keyscript() {
+	local keyscript_file="${MOUNT}/usr/share/initramfs-tools/scripts/lyra-deck-unl0kr-keyscript"
+
+	mkdir -p "$(dirname "${keyscript_file}")"
+	cat > "${keyscript_file}" <<-'EOF'
+	#!/bin/sh
+
+	if [ -z "${CRYPTTAB_SOURCE}" ] || [ -z "${CRYPTTAB_NAME}" ]; then
+		echo "This is a crypttab keyscript script, don't run directly." 1>&2
+		exit 1
+	fi
+
+	if [ -r /root/.lyra-cryptroot-passphrase ]; then
+		cat /root/.lyra-cryptroot-passphrase
+		exit 0
+	fi
+
+	plymouth hide-splash 2>/dev/null
+
+	ttymode=$(stty -g)
+	stty -echo -icanon min 0 time 0
+
+	unl0kr
+
+	stty "$ttymode"
+
+	plymouth show-splash 2>/dev/null
+	EOF
+
+	chmod 0755 "${keyscript_file}"
 }
 
 function lyra_deck_unl0kr__write_dm_control_script() {
@@ -193,6 +230,7 @@ function lyra_deck_unl0kr__write_firstlogin_cryptroot_helper() {
 				rm -f "${seed_file}"
 				: > "${marker}"
 				chmod 600 "${marker}"
+				update-initramfs -u >/dev/null 2>&1 || true
 				echo -e "\nDisk unlock passphrase updated.\n"
 				return 0
 			fi
@@ -254,7 +292,7 @@ function post_family_tweaks__configure_lyra_deck_firstlogin_cryptroot() {
 function pre_update_initramfs__configure_lyra_deck_unl0kr() {
 	local crypttab="${MOUNT}/etc/crypttab"
 	local mapper_name="${CRYPTROOT_MAPPER:-armbian-root}"
-	local keyscript_option="keyscript=/usr/share/initramfs-tools/scripts/unl0kr-keyscript"
+	local keyscript_option="keyscript=/usr/share/initramfs-tools/scripts/lyra-deck-unl0kr-keyscript"
 	local initramfs_option="initramfs"
 	local crypttab_tmp
 
@@ -298,6 +336,7 @@ function pre_update_initramfs__configure_lyra_deck_unl0kr() {
 	lyra_deck_unl0kr__write_config
 	lyra_deck_unl0kr__write_dm_control_script
 	lyra_deck_unl0kr__write_xkb_hook
+	lyra_deck_unl0kr__write_keyscript
 	lyra_deck_unl0kr__patch_hook
 
 	# Include both currently supported deck panel paths and shared touch input
