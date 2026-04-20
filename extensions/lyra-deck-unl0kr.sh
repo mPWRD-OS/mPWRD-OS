@@ -133,8 +133,9 @@ function lyra_deck_unl0kr__write_firstlogin_cryptroot_helper() {
 
 	lyra_deck_firstlogin_cryptroot_prompt() {
 		local marker="/root/.lyra-cryptroot-passphrase-set"
+		local seed_file="/root/.lyra-cryptroot-passphrase"
 		local backing_device current_passphrase new_passphrase repeated_passphrase
-		local current_file new_file remaining_tries
+		local current_file new_file remaining_tries current_mode
 
 		[[ -e "${marker}" ]] && return 0
 		command -v cryptsetup >/dev/null 2>&1 || return 0
@@ -142,14 +143,24 @@ function lyra_deck_unl0kr__write_firstlogin_cryptroot_helper() {
 		backing_device="$(lyra_deck_firstlogin_cryptroot_backing_device)"
 		[[ -n "${backing_device}" ]] || return 0
 
+		current_mode="prompt"
+		if [[ -r "${seed_file}" ]]; then
+			current_passphrase="$(cat "${seed_file}")"
+			[[ -n "${current_passphrase}" ]] && current_mode="seed"
+		fi
+
 		echo ""
 		echo "Set the disk unlock passphrase."
 
 		remaining_tries=3
 		while [[ "${remaining_tries}" -gt 0 ]]; do
-			read_password "Current disk unlock"
-			echo ""
-			current_passphrase="${password}"
+			if [[ "${current_mode}" == "seed" ]]; then
+				current_passphrase="$(cat "${seed_file}")"
+			else
+				read_password "Current disk unlock"
+				echo ""
+				current_passphrase="${password}"
+			fi
 
 			read_password "Create disk unlock"
 			echo ""
@@ -179,6 +190,7 @@ function lyra_deck_unl0kr__write_firstlogin_cryptroot_helper() {
 
 			if cryptsetup luksChangeKey "${backing_device}" "${new_file}" --batch-mode --key-file "${current_file}" >/dev/null 2>&1; then
 				rm -f "${current_file}" "${new_file}"
+				rm -f "${seed_file}"
 				: > "${marker}"
 				chmod 600 "${marker}"
 				echo -e "\nDisk unlock passphrase updated.\n"
@@ -186,6 +198,7 @@ function lyra_deck_unl0kr__write_firstlogin_cryptroot_helper() {
 			fi
 
 			rm -f "${current_file}" "${new_file}"
+			[[ "${current_mode}" == "seed" ]] && current_mode="prompt"
 			remaining_tries=$((remaining_tries - 1))
 			echo -e "Rejected - \e[0;31mcurrent disk unlock passphrase is incorrect or the change failed.\x1B[0m Try again [${remaining_tries}]."
 		done
@@ -196,6 +209,16 @@ function lyra_deck_unl0kr__write_firstlogin_cryptroot_helper() {
 	EOF
 
 	chmod 0755 "${helper_file}"
+}
+
+function lyra_deck_unl0kr__write_firstlogin_cryptroot_seed() {
+	local seed_file="${SDCARD}/root/.lyra-cryptroot-passphrase"
+
+	[[ -n "${CRYPTROOT_PASSPHRASE:-}" ]] || return 0
+
+	mkdir -p "$(dirname "${seed_file}")"
+	printf '%s' "${CRYPTROOT_PASSPHRASE}" > "${seed_file}"
+	chmod 0600 "${seed_file}"
 }
 
 function lyra_deck_unl0kr__patch_firstlogin() {
@@ -224,6 +247,7 @@ function post_family_tweaks__configure_lyra_deck_firstlogin_cryptroot() {
 	[[ "${CRYPTROOT_ENABLE}" == "yes" ]] || return 0
 
 	lyra_deck_unl0kr__write_firstlogin_cryptroot_helper
+	lyra_deck_unl0kr__write_firstlogin_cryptroot_seed
 	lyra_deck_unl0kr__patch_firstlogin
 }
 
