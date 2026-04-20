@@ -114,6 +114,119 @@ function lyra_deck_unl0kr__patch_hook() {
 	' "${hook_file}"
 }
 
+function lyra_deck_unl0kr__write_firstlogin_cryptroot_helper() {
+	local helper_file="${SDCARD}/usr/lib/armbian/armbian-firstlogin-cryptroot"
+
+	mkdir -p "$(dirname "${helper_file}")"
+	cat > "${helper_file}" <<-'EOF'
+	#!/bin/bash
+
+	lyra_deck_firstlogin_cryptroot_backing_device() {
+		local root_source mapper_name
+
+		root_source="$(findmnt -n -o SOURCE / 2>/dev/null || true)"
+		[[ "${root_source}" == /dev/mapper/* ]] || return 1
+
+		mapper_name="${root_source#/dev/mapper/}"
+		cryptsetup status "${mapper_name}" 2>/dev/null | awk '$1 == "device:" { print $2; exit }'
+	}
+
+	lyra_deck_firstlogin_cryptroot_prompt() {
+		local marker="/root/.lyra-cryptroot-passphrase-set"
+		local backing_device current_passphrase new_passphrase repeated_passphrase
+		local current_file new_file remaining_tries
+
+		[[ -e "${marker}" ]] && return 0
+		command -v cryptsetup >/dev/null 2>&1 || return 0
+
+		backing_device="$(lyra_deck_firstlogin_cryptroot_backing_device)"
+		[[ -n "${backing_device}" ]] || return 0
+
+		echo ""
+		echo "Set the disk unlock passphrase."
+
+		remaining_tries=3
+		while [[ "${remaining_tries}" -gt 0 ]]; do
+			read_password "Current disk unlock"
+			echo ""
+			current_passphrase="${password}"
+
+			read_password "Create disk unlock"
+			echo ""
+			new_passphrase="${password}"
+
+			read_password "Repeat disk unlock"
+			echo ""
+			repeated_passphrase="${password}"
+
+			if [[ -z "${current_passphrase}" || -z "${new_passphrase}" ]]; then
+				remaining_tries=$((remaining_tries - 1))
+				echo -e "Rejected - \e[0;31mpassphrase cannot be empty.\x1B[0m Try again [${remaining_tries}]."
+				continue
+			fi
+
+			if [[ "${new_passphrase}" != "${repeated_passphrase}" ]]; then
+				remaining_tries=$((remaining_tries - 1))
+				echo -e "Rejected - \e[0;31mpassphrases do not match.\x1B[0m Try again [${remaining_tries}]."
+				continue
+			fi
+
+			current_file="$(mktemp)"
+			new_file="$(mktemp)"
+			chmod 600 "${current_file}" "${new_file}"
+			printf '%s' "${current_passphrase}" > "${current_file}"
+			printf '%s' "${new_passphrase}" > "${new_file}"
+
+			if cryptsetup luksChangeKey "${backing_device}" "${new_file}" --batch-mode --key-file "${current_file}" >/dev/null 2>&1; then
+				rm -f "${current_file}" "${new_file}"
+				: > "${marker}"
+				chmod 600 "${marker}"
+				echo -e "\nDisk unlock passphrase updated.\n"
+				return 0
+			fi
+
+			rm -f "${current_file}" "${new_file}"
+			remaining_tries=$((remaining_tries - 1))
+			echo -e "Rejected - \e[0;31mcurrent disk unlock passphrase is incorrect or the change failed.\x1B[0m Try again [${remaining_tries}]."
+		done
+
+		echo -e "\n\x1B[91mError\x1B[0m: disk unlock passphrase was not updated."
+		return 1
+	}
+	EOF
+
+	chmod 0755 "${helper_file}"
+}
+
+function lyra_deck_unl0kr__patch_firstlogin() {
+	local firstlogin_file="${SDCARD}/usr/lib/armbian/armbian-firstlogin"
+
+	[[ -f "${firstlogin_file}" ]] || return 0
+	grep -q 'lyra_deck_firstlogin_cryptroot_prompt' "${firstlogin_file}" && return 0
+
+	sed -i '/\[\[ -z "\$PRESET_ROOT_PASSWORD" \]\] && echo "" # empty line/i \
+	if [[ -r /usr/lib/armbian/armbian-firstlogin-cryptroot ]]; then\
+		. /usr/lib/armbian/armbian-firstlogin-cryptroot\
+		lyra_deck_firstlogin_cryptroot_prompt || exit 1\
+	fi\
+' "${firstlogin_file}"
+}
+
+function post_family_tweaks__configure_lyra_deck_firstlogin_cryptroot() {
+	case "${RELEASE}" in
+		trixie)
+			;;
+		*)
+			return 0
+			;;
+	esac
+
+	[[ "${CRYPTROOT_ENABLE}" == "yes" ]] || return 0
+
+	lyra_deck_unl0kr__write_firstlogin_cryptroot_helper
+	lyra_deck_unl0kr__patch_firstlogin
+}
+
 function pre_update_initramfs__configure_lyra_deck_unl0kr() {
 	local crypttab="${MOUNT}/etc/crypttab"
 	local mapper_name="${CRYPTROOT_MAPPER:-armbian-root}"
