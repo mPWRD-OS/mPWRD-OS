@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# mPWRD-OS Conditional Warnings
+
+set -o pipefail
+
+RED=$'\e[31m'
+GREEN=$'\e[32m'
+YELLOW=$'\e[33m'
+GREY=$'\e[90m'
+BOLD=$'\e[1m'
+RESET=$'\e[0m'
+
+# Check if Meshtastic configuration directory is empty
+if [[ -z "$(find /etc/meshtasticd/config.d -mindepth 1 -maxdepth 1 2>/dev/null)" ]]; then
+  # Ensure we aren't using Pi HAT+ or USB CH341 (SPI mode)
+  if [[ ! -d /proc/device-tree/hat ]] && ! lsusb -d 1a86:5512 &>/dev/null; then
+    echo ""
+    echo " ${YELLOW}Radio not configured!${RESET}"
+    echo " Run ${GREEN}${BOLD}mpwrd-menu${RESET} to configure this device."
+  fi
+fi
