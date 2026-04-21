@@ -1,0 +1,10 @@
+# Tablet-style idle display behavior for the Lyra framebuffer console.
+# Timeouts are in seconds.
+
+IDLE_DIM_TIMEOUT=30
+IDLE_OFF_TIMEOUT=60
+DIM_BRIGHTNESS=4
+
+# Optional overrides:
+# BACKLIGHT_DEVICE=/sys/class/backlight/2-0045
+# INPUT_DEVICES="/dev/input/event0 /dev/input/event1 /dev/input/event2"
