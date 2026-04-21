@@ -1,0 +1,210 @@
+#!/usr/bin/env python3
+
+import glob
+import logging
+import os
+import selectors
+import shlex
+import signal
+import struct
+import sys
+import time
+from pathlib import Path
+
+
+CONFIG_PATH = "/etc/default/lyra-idle-display"
+EVENT_FORMAT = "llHHI"
+EVENT_SIZE = struct.calcsize(EVENT_FORMAT)
+DEFAULTS = {
+    "IDLE_DIM_TIMEOUT": "30",
+    "IDLE_OFF_TIMEOUT": "60",
+    "DIM_BRIGHTNESS": "4",
+    "POLL_INTERVAL": "1",
+}
+
+
+class IdleDisplayManager:
+    def __init__(self, config):
+        self.config = config
+        self.selector = selectors.DefaultSelector()
+        self.input_fds = []
+        self.running = True
+        self.state = "active"
+        self.last_activity = time.monotonic()
+        self.backlight_path = self._resolve_backlight_path()
+        self.brightness_path = self.backlight_path / "brightness"
+        self.max_brightness_path = self.backlight_path / "max_brightness"
+        self.bl_power_path = self.backlight_path / "bl_power"
+        self.max_brightness = self._read_int(self.max_brightness_path)
+        self.resume_brightness = max(self._current_brightness(), 1)
+        self.dim_timeout = self._read_positive_int("IDLE_DIM_TIMEOUT")
+        self.off_timeout = self._read_positive_int("IDLE_OFF_TIMEOUT")
+        self.poll_interval = self._read_positive_int("POLL_INTERVAL")
+        self.dim_brightness = min(
+            max(self._read_positive_int("DIM_BRIGHTNESS"), 0),
+            self.max_brightness,
+        )
+        if self.off_timeout < self.dim_timeout:
+            raise ValueError("IDLE_OFF_TIMEOUT must be greater than or equal to IDLE_DIM_TIMEOUT")
+        self.input_paths = self._resolve_input_paths()
+        if not self.input_paths:
+            raise RuntimeError("No input event devices found")
+        self._open_inputs()
+
+    def _read_positive_int(self, key):
+        try:
+            value = int(self.config[key])
+        except (KeyError, ValueError) as exc:
+            raise ValueError(f"Invalid integer for {key}") from exc
+        if value < 0:
+            raise ValueError(f"{key} must be >= 0")
+        return value
+
+    def _resolve_backlight_path(self):
+        configured = self.config.get("BACKLIGHT_DEVICE", "").strip()
+        if configured:
+            path = Path(configured)
+            if path.is_dir():
+                return path
+            raise RuntimeError(f"Configured backlight device does not exist: {configured}")
+
+        candidates = sorted(Path("/sys/class/backlight").glob("*"))
+        for candidate in candidates:
+            if candidate.is_dir():
+                return candidate
+        raise RuntimeError("No backlight devices found in /sys/class/backlight")
+
+    def _resolve_input_paths(self):
+        configured = self.config.get("INPUT_DEVICES", "").strip()
+        if configured:
+            paths = []
+            for token in shlex.split(configured):
+                matches = sorted(glob.glob(token))
+                if matches:
+                    paths.extend(matches)
+                elif os.path.exists(token):
+                    paths.append(token)
+            return sorted(dict.fromkeys(paths))
+
+        return sorted(glob.glob("/dev/input/event*"))
+
+    def _open_inputs(self):
+        for path in self.input_paths:
+            fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+            self.selector.register(fd, selectors.EVENT_READ, path)
+            self.input_fds.append(fd)
+            logging.info("watching input %s", path)
+
+    def _read_int(self, path):
+        return int(path.read_text(encoding="utf-8").strip())
+
+    def _write_int(self, path, value):
+        path.write_text(f"{value}\n", encoding="utf-8")
+
+    def _current_brightness(self):
+        return self._read_int(self.brightness_path)
+
+    def _wake_display(self):
+        if self.bl_power_path.exists():
+            self._write_int(self.bl_power_path, 0)
+        self._write_int(self.brightness_path, max(self.resume_brightness, 1))
+
+    def _dim_display(self):
+        dim_target = min(max(self.dim_brightness, 0), self.resume_brightness)
+        if self.bl_power_path.exists():
+            self._write_int(self.bl_power_path, 0)
+        self._write_int(self.brightness_path, dim_target)
+
+    def _sleep_display(self):
+        self._write_int(self.brightness_path, 0)
+        if self.bl_power_path.exists():
+            self._write_int(self.bl_power_path, 4)
+
+    def _record_activity(self):
+        self.last_activity = time.monotonic()
+        if self.state != "active":
+            self._wake_display()
+            self.state = "active"
+            logging.info("activity detected, restored brightness to %s", self.resume_brightness)
+
+    def _drain_events(self):
+        for key, _mask in self.selector.select(timeout=self.poll_interval):
+            while True:
+                try:
+                    data = os.read(key.fd, EVENT_SIZE * 64)
+                except BlockingIOError:
+                    break
+                if not data:
+                    break
+                self._record_activity()
+
+    def run(self):
+        logging.info(
+            "idle display manager started: backlight=%s dim=%ss off=%ss dim_brightness=%s",
+            self.backlight_path,
+            self.dim_timeout,
+            self.off_timeout,
+            self.dim_brightness,
+        )
+        while self.running:
+            self._drain_events()
+            idle_for = time.monotonic() - self.last_activity
+            if self.state == "active" and idle_for >= self.dim_timeout:
+                self.resume_brightness = max(self._current_brightness(), 1)
+                self._dim_display()
+                self.state = "dimmed"
+                logging.info("dimmed display after %.1fs idle", idle_for)
+            elif self.state == "dimmed" and idle_for >= self.off_timeout:
+                self._sleep_display()
+                self.state = "sleeping"
+                logging.info("turned display off after %.1fs idle", idle_for)
+
+    def stop(self, *_args):
+        self.running = False
+
+    def close(self):
+        for fd in self.input_fds:
+            try:
+                self.selector.unregister(fd)
+            except Exception:
+                pass
+            os.close(fd)
+
+
+def load_config(path):
+    config = dict(DEFAULTS)
+    try:
+        lines = Path(path).read_text(encoding="utf-8").splitlines()
+    except FileNotFoundError:
+        return config
+
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        config[key] = value
+    return config
+
+
+def main():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+        stream=sys.stdout,
+    )
+    manager = IdleDisplayManager(load_config(CONFIG_PATH))
+    signal.signal(signal.SIGINT, manager.stop)
+    signal.signal(signal.SIGTERM, manager.stop)
+    try:
+        manager.run()
+    finally:
+        manager.close()
+
+
+if __name__ == "__main__":
+    main()

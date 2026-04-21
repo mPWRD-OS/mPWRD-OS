@@ -214,6 +214,8 @@ BoardSpecific() {
 			mkdir -p /etc/systemd/system/multi-user.target.wants
 			ln -sf /etc/systemd/system/buffyboard-vt-watch.service \
 				/etc/systemd/system/multi-user.target.wants/buffyboard-vt-watch.service
+			ln -sf /etc/systemd/system/lyra-idle-display.service \
+				/etc/systemd/system/multi-user.target.wants/lyra-idle-display.service
 			# ttyS2 getty can stall boot on Lyra Zero Deck and is not needed for the
 			# touchscreen console login path.
 			ln -sf /dev/null /etc/systemd/system/serial-getty@ttyS2.service
