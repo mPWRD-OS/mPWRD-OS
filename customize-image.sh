@@ -186,6 +186,8 @@ BoardSpecific() {
 			EnableKernelDTOverlay "luckfox-lyra-zero-w-spi0-1cs-spidev"
 			;;
 		luckfox-pico-max)
+			# Enable pico-max eco overlay by default
+			EnableUserDTOverlay "pico-max-eco"
 			# Set meshtasticd MacAddressSource to 'eth0' for pico-max
 			MTSetMacSrc "eth0"
 			# Download waveshare pico config for pico-max (from develop branch)
@@ -193,6 +195,8 @@ BoardSpecific() {
 				-o /etc/meshtasticd/config.d/lora-luckfox-pico-max-ws-raspberry-pi-pico-hat.yaml
 			;;
 		luckfox-pico-mini)
+			# Enable pico-mini eco overlay by default
+			EnableUserDTOverlay "pico-mini-eco"
 			# Set meshtasticd MacAddressSource to 'eth0' for pico-mini
 			MTSetMacSrc "eth0"
 			# Download femtofox config for pico-mini (directory changed upstream)
