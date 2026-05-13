@@ -1,0 +1,184 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Disable nonessential audio, camera, and media blocks on Luckfox Pico Mini.
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	metadata {
+		title = "Eco mode for Luckfox Pico Mini";
+		compatible = "rockchip,rv1103g";
+		category = "power";
+		description = "Disable audio, camera, and media acceleration blocks while leaving Ethernet, USB, SPI, and I2C available.";
+	};
+
+	fragment@0 {
+		target-path = "/acodec-sound";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@1 {
+		target-path = "/acodec@ff480000";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@2 {
+		target-path = "/i2s@ffae0000";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@3 {
+		target-path = "/csi2-dphy0";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@4 {
+		target-path = "/csi2-dphy-hw@ff3e8000";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@5 {
+		target-path = "/mipi0-csi2";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@6 {
+		target-path = "/rkisp@ffa00000";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@7 {
+		target-path = "/rkcif@ffa10000";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@8 {
+		target-path = "/rkcif-mipi-lvds";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@9 {
+		target-path = "/rkcif-mipi-lvds-sditf";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@10 {
+		target-path = "/mipi-csi2-hw@ffa20000";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@11 {
+		target-path = "/mipi-csi2-hw@ffa30000";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@12 {
+		target-path = "/rkisp-vir0";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@13 {
+		target-path = "/i2c@ff470000/sc3336@30";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@14 {
+		target-path = "/i2c@ff470000/sc4336@30";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@15 {
+		target-path = "/i2c@ff470000/sc530ai@30";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@16 {
+		target-path = "/mpp-srv";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@17 {
+		target-path = "/mpp-vcodec";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@18 {
+		target-path = "/rkvenc@ffa50000";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@19 {
+		target-path = "/rkvenc-pp@ffa60000";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@20 {
+		target-path = "/rga@ff980000";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@21 {
+		target-path = "/rve@ffad0000";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@22 {
+		target-path = "/rkdvbm@ffa70000";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@23 {
+		target-path = "/spi@ff500000/fbtft@0";
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+};
