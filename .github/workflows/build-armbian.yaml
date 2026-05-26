@@ -18,23 +18,23 @@ jobs:
       matrix:
         include:
           - config: ebyte-ecb41-pge
-            armbian_ref: v26.2.0-trunk.890 # Dev
+            armbian_ref: v26.05 # Stable Branch
           - config: forlinx-ok3506-s12
-            armbian_ref: v26.2.0-trunk.890 # Dev
+            armbian_ref: v26.05 # Stable Branch
           - config: luckfox-lyra-plus
-            armbian_ref: v26.2.0-trunk.890 # Dev
+            armbian_ref: v26.05 # Stable Branch
           - config: luckfox-lyra-ultra-w
-            armbian_ref: v26.2.0-trunk.890 # Dev
+            armbian_ref: v26.05 # Stable Branch
           - config: luckfox-lyra-zero-w
-            armbian_ref: v26.2.0-trunk.890 # Dev
+            armbian_ref: v26.05 # Stable Branch
           - config: luckfox-pico-max
-            armbian_ref: 761d04edac790c552380061d5c2ff0b780ff18d4 # Dev
+            armbian_ref: v26.05 # Stable Branch
           - config: luckfox-pico-mini
-            armbian_ref: 761d04edac790c552380061d5c2ff0b780ff18d4 # Dev
+            armbian_ref: v26.05 # Stable Branch
           - config: raspberry-pi-64bit
-            armbian_ref: v26.2.1 # Stable
+            armbian_ref: v26.05 # Stable Branch
           - config: uefi-x86_64
-            armbian_ref: v26.2.0-trunk.890 # Dev
+            armbian_ref: v26.05 # Stable Branch
       fail-fast: false
     steps:
       - name: Checkout armbian/build into workspace root
