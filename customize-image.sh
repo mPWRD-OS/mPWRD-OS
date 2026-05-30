@@ -43,12 +43,6 @@ case $RELEASE in
 esac
 
 Main() {
-	apt-get update
-	# meshtasticd can't currently be installed via the `meshtasticd` Extension
-	# due to a race condition with the gpio group when installing before family-tweaks.
-	InstallAptPkg "meshtasticd"
-	# Same story with i2c-tools. Race condition with i2c group in family-tweaks.
-	InstallAptPkg "i2c-tools"
 	case $pipx_g in
 		true)
 			InstallPipxPkg "meshtastic"
@@ -62,7 +56,6 @@ Main() {
 	# Always run
 	ApplyFSOverlay
 	BoardSpecific "$@"
-	apt-get clean && rm -rf /var/lib/apt/lists/*
 	CompileDTBO
 } # Main
 
@@ -71,14 +64,6 @@ ApplyFSOverlay() {
 	# replacing existing files
 	cp -r /tmp/overlay/fs/* /
 } # ApplyFSOverlay
-
-InstallAptPkg() {
-	PKGSPEC="$1"
-	# Install package via apt-get
-	echo "APT: Installing ${PKGSPEC}..."
-	apt-get --yes --allow-unauthenticated \
-		install $PKGSPEC
-} # InstallAptPkg
 
 InstallPipxPkg() {
 	PKGSPEC="$1"
