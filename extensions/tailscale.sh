@@ -1,8 +1,19 @@
 # Add Tailscale repo
 # install tailscale
 
+# Tailscale/tailscaled is too heavy for low-memory boards (e.g. Luckfox Pico
+# Mini). When the armbian `lowmem` extension is enabled, skip it entirely.
+function _tailscale_lowmem_enabled() {
+	[[ ",${ENABLE_EXTENSIONS:-}," == *,lowmem,* ]]
+}
+
 function custom_apt_repo__add_tailscale_repo() {
 	local distro codename keyring_file list_file
+
+	if _tailscale_lowmem_enabled; then
+		display_alert "Skipping Tailscale repo on low-memory board (lowmem extension enabled)" "" "info"
+		return 0
+	fi
 	case $DISTRIBUTION in
 		Debian)
 			distro="debian"
@@ -31,5 +42,9 @@ function custom_apt_repo__add_tailscale_repo() {
 }
 
 function extension_prepare_config__add_tailscale() {
+	if _tailscale_lowmem_enabled; then
+		display_alert "Skipping Tailscale package on low-memory board (lowmem extension enabled)" "" "info"
+		return 0
+	fi
 	add_packages_to_image tailscale
 }
