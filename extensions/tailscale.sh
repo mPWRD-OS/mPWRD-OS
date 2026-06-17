@@ -4,7 +4,11 @@
 # Tailscale/tailscaled is too heavy for low-memory boards (e.g. Luckfox Pico
 # Mini). When the armbian `lowmem` extension is enabled, skip it entirely.
 function _tailscale_lowmem_enabled() {
-	[[ ",${ENABLE_EXTENSIONS:-}," == *,lowmem,* ]]
+if [[ "$(type -t post_family_tweaks__enable_lowmem_mkswap)" == "function" ]]; then
+	# lowmem is enabled
+	return 0
+fi
+return 1
 }
 
 function custom_apt_repo__add_tailscale_repo() {
