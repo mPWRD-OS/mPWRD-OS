@@ -151,9 +151,8 @@ BoardSpecific() {
 			EnableKernelDTOverlay "luckfox-lyra-plus-spi0-1cs_rmio13-spidev"
 			# Set meshtasticd MacAddressSource to 'end1' for lyra-plus
 			MTSetMacSrc "end1"
-			# Download waveshare pico config for lyra-plus
-			curl -fsSL https://raw.githubusercontent.com/meshtastic/firmware/refs/tags/v2.7.22.96dd647/bin/config.d/lora-lyra-ws-raspberry-pi-pico-hat.yaml \
-				-o /etc/meshtasticd/config.d/lora-lyra-ws-raspberry-pi-pico-hat.yaml
+			# Install waveshare pico config for lyra-plus
+			cp /etc/meshtasticd/available.d/lora-lyra-ws-raspberry-pi-pico-hat.yaml /etc/meshtasticd/config.d/
 			;;
 		luckfox-lyra-ultra-w)
 			# Enable devicetree overlays
@@ -162,9 +161,8 @@ BoardSpecific() {
 			EnableUserDTOverlay "luckfox-lyra-ultra-w-i2c0"
 			# Set meshtasticd MacAddressSource to 'end1' for lyra-ultra-w
 			MTSetMacSrc "end1"
-			# Download 'Luckfox Ultra' 2W hat config for lyra-ultra
-			curl -fsSL https://raw.githubusercontent.com/meshtastic/firmware/refs/tags/v2.7.22.96dd647/bin/config.d/lora-lyra-ultra_2w.yaml \
-				-o /etc/meshtasticd/config.d/lora-lyra-ultra_2w.yaml
+			# Install 'Luckfox Ultra' 2W hat config for lyra-ultra
+			cp /etc/meshtasticd/available.d/lora-lyra-ultra_2w.yaml /etc/meshtasticd/config.d/
 			;;
 		luckfox-lyra-zero-w)
 			# Enable luckfox-lyra-zero-w-spi0-1cs-spidev overlay
@@ -173,16 +171,14 @@ BoardSpecific() {
 		luckfox-pico-max)
 			# Set meshtasticd MacAddressSource to 'end0' for pico-max
 			MTSetMacSrc "end0"
-			# Download waveshare pico config for pico-max (from develop branch)
-			curl -fsSL https://github.com/meshtastic/firmware/raw/466cc4cecddd11cd1bb0d0b166bd658d116832b3/bin/config.d/lora-luckfox-pico-max-ws-raspberry-pi-pico-hat.yaml \
-				-o /etc/meshtasticd/config.d/lora-luckfox-pico-max-ws-raspberry-pi-pico-hat.yaml
+			# Install waveshare pico config for pico-max
+			cp /etc/meshtasticd/available.d/lora-luckfox-pico-max-ws-raspberry-pi-pico-hat.yaml /etc/meshtasticd/config.d/
 			;;
 		luckfox-pico-mini)
 			# Set meshtasticd MacAddressSource to 'end0' for pico-mini
 			MTSetMacSrc "end0"
-			# Download femtofox config for pico-mini (directory changed upstream)
-			curl -fsSL https://raw.githubusercontent.com/meshtastic/firmware/refs/tags/v2.7.22.96dd647/bin/config.d/lora-femtofox_SX1262_TCXO.yaml \
-				-o /etc/meshtasticd/config.d/lora-femtofox_SX1262_TCXO.yaml
+			# Install femtofox config for pico-mini
+			cp /etc/meshtasticd/available.d/lora-femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d/
 			;;
 		# raspberry-pi-64bit
 		rpi4b)
