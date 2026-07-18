@@ -156,7 +156,7 @@ BoardSpecific() {
 			;;
 		luckfox-lyra-ultra-w)
 			# Enable devicetree overlays
-			EnableKernelDTOverlay "luckfox-lyra-ultra-w-spi0-1cs-spidev"
+			EnableKernelDTOverlay "luckfox-lyra-ultra-w-spi0-2cs-spidev"
 			EnableUserDTOverlay "luckfox-lyra-ultra-w-uart1"
 			EnableUserDTOverlay "luckfox-lyra-ultra-w-i2c0"
 			# Set meshtasticd MacAddressSource to 'end1' for lyra-ultra-w
