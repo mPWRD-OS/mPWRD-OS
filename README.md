@@ -23,12 +23,12 @@
 | Chipset  | Board                          | Status    | `meshtasticd` status |
 | -------- | ------------------------------ | --------- | -------------------- |
 | BCM2711  | 🍓 [Raspberry Pi (64-bit)][b1] | Supported | ✅ `beta`            |
-| RK3506G  | 🛜 [EByte ECB41-PGE][b2]       | Supported | 🧪 `alpha`           |
-| RK3506G  | 🦊 [Luckfox Lyra Plus][b3]     | Supported | 🧪 `alpha`           |
-| RK3506B  | 🦊 [Luckfox Lyra Ultra W][b4]  | Supported | 🧪 `alpha`           |
-| RK3506B  | 🦊 [Luckfox Lyra Zero W][b5]   | Supported | 🧪 `alpha`           |
-| RK3506J  | 🐈 [ForLinx OK3506-S12][b6]    | Supported | 🧪 `alpha`           |
-| RV1106G  | 🦊 [Luckfox Pico Max][b7]      | Supported | 🚧 `daily`           |
+| RK3506G  | 🛜 [EByte ECB41-PGE][b2]       | Supported | ✅ `beta`            |
+| RK3506G  | 🦊 [Luckfox Lyra Plus][b3]     | Supported | ✅ `beta`            |
+| RK3506B  | 🦊 [Luckfox Lyra Ultra W][b4]  | Supported | ✅ `beta`            |
+| RK3506B  | 🦊 [Luckfox Lyra Zero W][b5]   | Supported | ✅ `beta`            |
+| RK3506J  | 🐈 [ForLinx OK3506-S12][b6]    | Supported | ✅ `beta`            |
+| RV1106G  | 🦊 [Luckfox Pico Max][b7]      | Supported | ✅ `beta`            |
 | RV1103G  | 🦊🤏 [Luckfox Pico Mini][b8]   | Supported | ✅ `beta`            |
 | RV1103B  | 🧅 [OnionIOT Omega4][b9]       | Todo      |                      |
 | UEFI     | 🖥️ [Generic x86_64 UEFI][b10]  | Dev       | ✅ `beta`            |
