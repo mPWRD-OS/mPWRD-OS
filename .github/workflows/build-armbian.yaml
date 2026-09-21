@@ -12,22 +12,22 @@ on:
 
 jobs:
   build:
-    # Use ubuntu-24.04 for x86_64 builds, ubuntu-24.04-arm for ARM builds (everything else)
+    # Use ubuntu-26.04 for x86_64 builds, ubuntu-26.04-arm for ARM builds (everything else)
     # runs-on: ${{ contains(matrix.config, 'x86_64') && 'ubuntu-26.04' || 'ubuntu-26.04-arm' }}
     runs-on: ubuntu-26.04
     strategy:
       matrix:
         include:
           - config: ebyte-ecb41-pge
-            armbian_ref: 5329e6649cdd92dbd0c32fc54b5e6a3d449f6d0c # RK3506 CMA fix
+            armbian_ref: v26.11.0-trunk.54 # RK3506 rkr7.2
           - config: forlinx-ok3506-s12
-            armbian_ref: 5329e6649cdd92dbd0c32fc54b5e6a3d449f6d0c # RK3506 CMA fix
+            armbian_ref: v26.11.0-trunk.54 # RK3506 rkr7.2
           - config: luckfox-lyra-plus
-            armbian_ref: 5329e6649cdd92dbd0c32fc54b5e6a3d449f6d0c # RK3506 CMA fix
+            armbian_ref: v26.11.0-trunk.54 # RK3506 rkr7.2
           - config: luckfox-lyra-ultra-w
-            armbian_ref: 5329e6649cdd92dbd0c32fc54b5e6a3d449f6d0c # RK3506 CMA fix
+            armbian_ref: v26.11.0-trunk.54 # RK3506 rkr7.2
           - config: luckfox-lyra-zero-w
-            armbian_ref: 5329e6649cdd92dbd0c32fc54b5e6a3d449f6d0c # RK3506 CMA fix
+            armbian_ref: v26.11.0-trunk.54 # RK3506 rkr7.2
           - config: luckfox-pico-max
             armbian_ref: v26.08 # Stable branch
           - config: luckfox-pico-mini
