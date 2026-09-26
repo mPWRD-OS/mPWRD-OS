@@ -27,6 +27,7 @@ function pre_umount_final_image__700_disable_bg_apt() {
 	chroot_mount chmod -x /usr/lib/armbian/armbian-apt-updates || true
 	chroot_mount chmod -x /etc/cron.daily/apt-compat || true
 	chroot_mount rm -f /etc/cron.d/armbian-updates || true
+	chroot_mount rm -f /etc/apt/apt.conf.d/02-armbian-postupdate || true
 
 	# Ensure apt periodic behavior stays disabled.
 	mkdir -p "${MOUNT}/etc/apt/apt.conf.d"
